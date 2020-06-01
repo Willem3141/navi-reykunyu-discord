@@ -123,7 +123,7 @@ function toReadableType(type) {
 		"intj": "intj.",
 		"part": "part.",
 		"conj": "conj.",
-		"ctr": "F-word",
+		"ctr": "sbd.",
 		"v:?": "v.",
 		"v:in": "vin.",
 		"v:tr": "vtr.",
@@ -131,6 +131,7 @@ function toReadableType(type) {
 		"v:si": "v.",
 		"v:cp": "vcp.",
 		"phr": "phr.",
+		"inter": "inter.",
 	}
 	return '*' + mapping[type] + '*';
 }
