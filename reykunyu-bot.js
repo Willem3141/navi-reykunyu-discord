@@ -33,6 +33,12 @@ client.on('message', async message => {
 	} else if (text.startsWith('!finde ')) {
 		const query = text.substring(7);
 		doReverseSearch(query, 'de', message);
+	} else if (text.startsWith('!trouve ')) {
+		const query = text.substring(8);
+		doReverseSearch(query, 'fr', message);
+	} else if (text.startsWith('!vind ')) {
+		const query = text.substring(6);
+		doReverseSearch(query, 'nl', message);
 	} else if (message.channel.type === "dm") {
 		doNaviSearch(text, message);
 	}
