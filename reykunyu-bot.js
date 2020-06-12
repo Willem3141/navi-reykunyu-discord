@@ -27,6 +27,12 @@ client.on('message', async message => {
 	if (text.startsWith('!run ')) {
 		const query = text.substring(5);
 		doNaviSearch(query, message);
+	} else if (text.startsWith('!find ')) {
+		const query = text.substring(6);
+		doReverseSearch(query, 'en', message);
+	} else if (text.startsWith('!finde ')) {
+		const query = text.substring(7);
+		doReverseSearch(query, 'de', message);
 	} else if (message.channel.type === "dm") {
 		doNaviSearch(text, message);
 	}
@@ -95,7 +101,7 @@ function sendSingleWordResult(result, message) {
 		}
 
 		text += '    ';
-		text += r['translations'][0]["en"];
+		text += getTranslation(message, r['translations'][0]);
 
 		text += '\n';
 
@@ -214,6 +220,10 @@ function sendSentenceResult(results, message) {
 		if (i > 0) {
 			text += '\n';
 		}
+		if (i >= 9 && results.length > 10) {
+			text += '(' + (results.length - 9) + ' more words omitted)';
+			break;
+		}
 
 		text += '**'
 		text += results[i]['tìpawm'];
@@ -231,27 +241,90 @@ function sendSentenceResult(results, message) {
 			}
 			let r = result[j];
 
-			text += '(';
-			if (r["type"] === "n:si") {
-				text += "+ **si**, ";
-			}
-			text += toReadableType(r["type"]);
-			if ((r["type"] === "n" || r["type"] === "n:pr" || r.hasOwnProperty("conjugation")) && r["conjugated"][0].toLowerCase() !== r["conjugated"][1].toLowerCase()) {
-				text += ', ' + nounConjugation(r["conjugated"], true);
-			}
-
-			if (r["type"].substring(0, 2) === "v:" && r["conjugated"][0].toLowerCase() !== r["conjugated"][1].toLowerCase()) {
-				text += ', ' + verbConjugation(r["conjugated"], true);
-			}
-			text += ') ';
-		
-			if (r["status"]) {
-				text += '  :warning:  ';
-			}
-			
-			text += r['translations'][0]["en"];
+			text += singleLineResultMarkdown(r, message);
 		}
 	}
 	message.channel.send(text);
+}
+
+function singleLineResultMarkdown(r, message) {
+
+	let text = '(';
+
+	if (r["type"] === "n:si") {
+		text += "+ **si**, ";
+	}
+	text += toReadableType(r["type"]);
+	if ((r["type"] === "n" || r["type"] === "n:pr" || r.hasOwnProperty("conjugation")) &&
+			r.hasOwnProperty('conjugated') &&
+			r["conjugated"][0].toLowerCase() !== r["conjugated"][1].toLowerCase()) {
+		text += ', ' + nounConjugation(r["conjugated"], true);
+	}
+
+	if (r["type"].substring(0, 2) === "v:" && r.hasOwnProperty('conjugated') &&
+			r["conjugated"][0].toLowerCase() !== r["conjugated"][1].toLowerCase()) {
+		text += ', ' + verbConjugation(r["conjugated"], true);
+	}
+	text += ') ';
+
+	if (r["status"]) {
+		text += '  :warning:  ';
+	}
+	
+	text += getTranslation(message, r['translations'][0]);
+
+	return text;
+}
+
+function getTranslation(message, translation) {
+	let channelName = message.channel.name;
+	if (channelName === "deutsch" && translation.hasOwnProperty("de")) {
+		return translation["de"];
+	} else {
+		return translation["en"];
+	}
+}
+
+async function doReverseSearch(query, language, message) {
+	const response = await fetch('https://reykunyu.wimiso.nl/api/search?language=' + language + '&query=' + query)
+		.then(response => response.json())
+		.catch(error => {
+			message.channel.send("Something went wrong while searching. Please try again later, or ping Wllìm if this problem persists.")
+			return;
+		});
+
+	let text = '';
+
+	if (response.length === 0) {
+		message.channel.send('No results found.');
+		return;
+	}
+
+	for (let i = 0; i < response.length; i++) {
+		let r = response[i];
+
+		if (i > 0) {
+			text += '\n';
+		}
+		if (i >= 9 && response.length > 10) {
+			text += '(' + (response.length - 10) + ' more results omitted)';
+			break;
+		}
+
+		text += '**'
+		text += r['na\'vi'];
+		text += '**'
+		text += '    '
+
+		text += singleLineResultMarkdown(r, message).replace(
+				new RegExp('(' + escapeRegex(query) + ')', 'ig'), '__$1__');
+	}
+
+	message.channel.send(text);
+}
+
+function escapeRegex(string) {
+	// https://stackoverflow.com/a/3561711/12243952
+	return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
