@@ -248,6 +248,8 @@ function sendSentenceResult(results, message) {
 			let r = result[j];
 
 			text += singleLineResultMarkdown(r, message);
+
+			text += getTranslation(message, r['translations'][0]);
 		}
 	}
 	message.channel.send(text);
@@ -276,15 +278,18 @@ function singleLineResultMarkdown(r, message) {
 	if (r["status"]) {
 		text += '  :warning:  ';
 	}
-	
-	text += getTranslation(message, r['translations'][0]);
 
 	return text;
 }
 
 function getTranslation(message, translation) {
 	let channelName = message.channel.name;
-	if (channelName === "deutsch" && translation.hasOwnProperty("de")) {
+	let guildName = "";
+	if (message.guild) {
+		guildName = message.guild.name;
+	}
+	if ((channelName === "deutsch" || guildName === "Deutsche Na'vi Lerngruppe") &&
+			translation.hasOwnProperty("de")) {
 		return translation["de"];
 	} else {
 		return translation["en"];
@@ -322,8 +327,10 @@ async function doReverseSearch(query, language, message) {
 		text += '**'
 		text += '    '
 
-		text += singleLineResultMarkdown(r, message).replace(
-				new RegExp('(' + escapeRegex(query) + ')', 'ig'), '__$1__');
+		text += singleLineResultMarkdown(r, message);
+		
+		text += r['translations'][0][language]
+			.replace(new RegExp('(' + escapeRegex(query) + ')', 'ig'), '__$1__');
 	}
 
 	message.channel.send(text);
