@@ -106,6 +106,12 @@ function sendSingleWordResult(result, message) {
 			text += '\n';
 		}
 
+		if (r["type"] === "adj" && r["conjugated"][2] !== "predicative") {
+			text += '    ';
+			text += adjectiveConjugation(r["conjugated"]);
+			text += '\n';
+		}
+
 		text += '    ';
 		text += getTranslation(message, r['translations'][0]);
 
@@ -208,6 +214,27 @@ function verbConjugation(conjugation, short) {
 			text += " + ";
 			text += "‹" + conjugation[2][i] + "›";
 		}
+	}
+	
+	if (!short) {
+		text += "  =  ";
+		text += '**' + conjugation[0] + '**';
+	}
+
+	return text;
+}
+
+function adjectiveConjugation(conjugation, short) {
+	let text = short ? '< ' : '→  ';
+
+	if (conjugation[2] === "postnoun") {
+		text += "a + ";
+	}
+
+	text += conjugation[1];
+
+	if (conjugation[2] === "prenoun") {
+		text += " + a";
 	}
 	
 	if (!short) {
