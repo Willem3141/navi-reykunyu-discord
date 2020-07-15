@@ -300,6 +300,10 @@ function singleLineResultMarkdown(r, message) {
 			r["conjugated"][0].toLowerCase() !== r["conjugated"][1].toLowerCase()) {
 		text += ', ' + verbConjugation(r["conjugated"], true);
 	}
+
+	if (r["type"] === "adj" && r["conjugated"][2] !== "predicative") {
+		text += ', ' + adjectiveConjugation(r["conjugated"], true);
+	}
 	text += ') ';
 
 	if (r["status"]) {
