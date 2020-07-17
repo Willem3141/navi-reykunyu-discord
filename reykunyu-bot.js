@@ -57,7 +57,7 @@ async function doNaviSearch(query, message) {
 	} else if (response.length === 1) {
 		sendSingleWordResult(response[0]['sì\'eyng'], message);
 	} else {
-		sendSentenceResult(response, message);
+		sendSentenceResult(response, message, query);
 	}
 }
 
@@ -245,7 +245,7 @@ function adjectiveConjugation(conjugation, short) {
 	return text;
 }
 
-function sendSentenceResult(results, message) {
+async function sendSentenceResult(results, message, query) {
 
 	text = '';
 
@@ -279,6 +279,33 @@ function sendSentenceResult(results, message) {
 			text += getTranslation(message, r['translations'][0]);
 		}
 	}
+
+	const parseResults = await fetch('https://reykunyu.wimiso.nl/api/parse?tìpawm=' + query)
+		.then(response => response.json())
+		.catch(error => {
+			console.log('parsing failed for: ' + query);
+			return;
+		});
+
+	if (parseResults) {
+		let lastTranslation = null;
+		for (let i = 0; i < parseResults.length; i++) {
+			let result = parseResults[i];
+			if (i > 0 && result.penalty > parseResults[0].penalty) {
+				break;
+			}
+			if (result.errors.length > 0) {
+				break;
+			}
+			let translation = result.translation;
+			if (translation !== lastTranslation) {
+				text += "\n";
+				text += "→ \"" + translation + "\"";
+				lastTranslation = translation;
+			}
+		}
+	}
+
 	message.channel.send(text);
 }
 
