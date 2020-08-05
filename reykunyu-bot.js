@@ -328,7 +328,7 @@ function singleLineResultMarkdown(r, message) {
 		text += ', ' + verbConjugation(r["conjugated"], true);
 	}
 
-	if (r["type"] === "adj" && r["conjugated"][2] !== "predicative") {
+	if (r["type"] === "adj" && r.hasOwnProperty('conjugated') && r["conjugated"][2] !== "predicative") {
 		text += ', ' + adjectiveConjugation(r["conjugated"], true);
 	}
 	text += ') ';
