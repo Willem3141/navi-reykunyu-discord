@@ -24,23 +24,41 @@ client.on('message', async message => {
 	}
 
 	const text = message.content;
+	if (text === '!run help') {
+		message.channel.send("Reykunyu is a dictionary bot that allows you to look up the translation of Na'vi words.\n\n" +
+				"**Use `!run lì'u` to translate the Na'vi word `lì'u` into English.**\n" +
+				"Reykunyu understands most conjugated forms as well, and will automatically return the translation of the root word. " +
+				"If you provide more than one word, it will translate all of them.\n\n" +
+				"**Use `!find word` to find Na'vi words whose English definition contains `word`.**\n" +
+				"Alternatively, `!finde`, `!trouve`, and `!vind` allow you to search in German, French, or Dutch.\n\n" +
+				"Reykunyu responds to DMs as well (and in that case, you can omit `!run`). You can also use Reykunyu's website: https://reykunyu.wimiso.nl/");
+		return;
+	}
+
+	let query = text;
 	if (text.startsWith('!run ')) {
-		const query = text.substring(5);
+		query = text.substring(5);
 		doNaviSearch(query, message);
 	} else if (text.startsWith('!find ')) {
-		const query = text.substring(6);
+		query = text.substring(6);
 		doReverseSearch(query, 'en', message);
 	} else if (text.startsWith('!finde ')) {
-		const query = text.substring(7);
+		query = text.substring(7);
 		doReverseSearch(query, 'de', message);
 	} else if (text.startsWith('!trouve ')) {
-		const query = text.substring(8);
+		query = text.substring(8);
 		doReverseSearch(query, 'fr', message);
 	} else if (text.startsWith('!vind ')) {
-		const query = text.substring(6);
+		query = text.substring(6);
 		doReverseSearch(query, 'nl', message);
 	} else if (message.channel.type === "dm") {
 		doNaviSearch(text, message);
+	}
+
+	if (query.startsWith('-r')) {
+		message.channel.send("(Want to search for an English word? Try `!find` instead of `!run`, or type `!run help` for more information.)");
+	} else if (query.startsWith('-')) {
+		message.channel.send("(Trying to get help with Reykunyu? Type `!run help` for more information.)");
 	}
 });
 
