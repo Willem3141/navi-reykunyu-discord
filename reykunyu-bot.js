@@ -349,6 +349,9 @@ function getTranslation(message, translation) {
 	if ((channelName === "deutsch" || guildName === "Deutsche Na'vi Lerngruppe") &&
 			translation.hasOwnProperty("de")) {
 		return translation["de"];
+	} else if ((channelName === "français") &&
+			translation.hasOwnProperty("fr")) {
+		return translation["fr"];
 	} else {
 		return translation["en"];
 	}
