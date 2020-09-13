@@ -53,6 +53,8 @@ client.on('message', async message => {
 		doReverseSearch(query, 'nl', message);
 	} else if (message.channel.type === "dm") {
 		doNaviSearch(text, message);
+	} else {
+		return;
 	}
 
 	if (query.startsWith('-r')) {
@@ -364,12 +366,15 @@ function getTranslation(message, translation) {
 	if (message.guild) {
 		guildName = message.guild.name;
 	}
-	if ((channelName === "deutsch" || guildName === "Deutsche Na'vi Lerngruppe") &&
+	if ((channelName.includes("deutsch") || guildName === "Deutsche Na'vi Lerngruppe") &&
 			translation.hasOwnProperty("de")) {
 		return translation["de"];
-	} else if ((channelName === "français") &&
+	} else if ((channelName.includes("français")) &&
 			translation.hasOwnProperty("fr")) {
 		return translation["fr"];
+	} else if ((channelName.includes("nederlands")) &&
+			translation.hasOwnProperty("nl")) {
+		return translation["nl"];
 	} else {
 		return translation["en"];
 	}
