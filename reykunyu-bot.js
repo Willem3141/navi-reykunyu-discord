@@ -36,6 +36,7 @@ client.on('message', async message => {
 	}
 
 	let query = text;
+
 	if (text.startsWith('!run ')) {
 		query = text.substring(5);
 		doNaviSearch(query, message);
@@ -65,7 +66,7 @@ client.on('message', async message => {
 });
 
 async function doNaviSearch(query, message) {
-	const response = await fetch('https://reykunyu.wimiso.nl/api/fwew?tìpawm=' + query)
+	const response = await fetch('https://reykunyu.wimiso.nl/api/fwew?tìpawm=' + encodeURIComponent(query))
 		.then(response => response.json())
 		.catch(error => {
 			message.channel.send("Something went wrong while searching. Please try again later, or ping Wllìm if this problem persists.")
@@ -362,6 +363,9 @@ function singleLineResultMarkdown(r, message) {
 
 function getTranslation(message, translation) {
 	let channelName = message.channel.name;
+	if (!channelName) {
+		channelName = "";
+	}
 	let guildName = "";
 	if (message.guild) {
 		guildName = message.guild.name;
