@@ -69,7 +69,7 @@ async function doNaviSearch(query, message) {
 	const response = await fetch('https://reykunyu.wimiso.nl/api/fwew?tìpawm=' + encodeURIComponent(query))
 		.then(response => response.json())
 		.catch(error => {
-			message.channel.send("Something went wrong while searching. Please try again later, or ping Wllìm if this problem persists.")
+			message.channel.send("Something went wrong while searching. This shouldn't happen, so let me ping <@163315929760006144> to get the issue fixed.")
 			return;
 		});
 
@@ -388,7 +388,7 @@ async function doReverseSearch(query, language, message) {
 	const response = await fetch('https://reykunyu.wimiso.nl/api/search?language=' + language + '&query=' + query)
 		.then(response => response.json())
 		.catch(error => {
-			message.channel.send("Something went wrong while searching. Please try again later, or ping Wllìm if this problem persists.")
+			message.channel.send("Something went wrong while searching. This shouldn't happen, so let me ping <@163315929760006144> to get the issue fixed.")
 			return;
 		});
 
