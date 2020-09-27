@@ -57,11 +57,11 @@ client.on('message', async message => {
 	} else if (text.startsWith('!vind ')) {
 		query = text.substring(6);
 		doReverseSearch(query, 'nl', message);
-	} else if (message.channel.type === "dm") {
-		doNaviSearch(text, message);
 	} else if (text.startsWith('!tslam ')) {
 		query = text.substring(7);
 		doParse(query, message);
+	} else if (message.channel.type === "dm") {
+		doNaviSearch(text, message);
 	} else {
 		return;
 	}
