@@ -31,7 +31,12 @@ client.on('message', async message => {
 				"If you provide more than one word, it will translate all of them.\n\n" +
 				"**Use `!find word` to find Na'vi words whose English definition contains `word`.**\n" +
 				"Alternatively, `!finde`, `!trouve`, and `!vind` allow you to search in German, French, or Dutch.\n\n" +
-				"Reykunyu responds to DMs as well (and in that case, you can omit `!run`). You can also use Reykunyu's website: https://reykunyu.wimiso.nl/");
+				"**Use `!tslam sentence` to run a grammar analyzer on your sentence.**\n" +
+				"This will produce a translation if it could understand the sentence, or an error message if it could not " +
+				"(because either your sentence was incorrect, or Reykunyu wasn't smart enough to understand it). " +
+				"Be aware: this is experimental, so it may produce incorrect results, and works for very simple sentences only.\n\n" +
+				"Reykunyu responds to DMs as well, and in that case you can omit `!run`. " +
+				"You can also use Reykunyu's website with more functionality (conjugation tables, word sources, ...): https://reykunyu.wimiso.nl/");
 		return;
 	}
 
@@ -54,6 +59,9 @@ client.on('message', async message => {
 		doReverseSearch(query, 'nl', message);
 	} else if (message.channel.type === "dm") {
 		doNaviSearch(text, message);
+	} else if (text.startsWith('!tslam ')) {
+		query = text.substring(7);
+		doParse(query, message);
 	} else {
 		return;
 	}
@@ -301,32 +309,6 @@ async function sendSentenceResult(results, message, query) {
 		}
 	}
 
-	const parseResults = await fetch('https://reykunyu.wimiso.nl/api/parse?tìpawm=' + query)
-		.then(response => response.json())
-		.catch(error => {
-			console.log('parsing failed for: ' + query);
-			return;
-		});
-
-	if (parseResults) {
-		let lastTranslation = null;
-		for (let i = 0; i < parseResults.length; i++) {
-			let result = parseResults[i];
-			if (i > 0 && result.penalty > parseResults[0].penalty) {
-				break;
-			}
-			if (result.errors.length > 0) {
-				break;
-			}
-			let translation = result.translation;
-			if (translation !== lastTranslation) {
-				text += "\n";
-				text += "→ \"" + translation + "\"";
-				lastTranslation = translation;
-			}
-		}
-	}
-
 	message.channel.send(text);
 }
 
@@ -427,5 +409,82 @@ async function doReverseSearch(query, language, message) {
 function escapeRegex(string) {
 	// https://stackoverflow.com/a/3561711/12243952
 	return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+}
+
+async function doParse(query, message) {
+
+	if (query.toLowerCase().indexOf('futa futa futa') !== -1) {
+		message.react('716455202416361522');
+		message.channel.send("Futa futa futa? Nìngay srak, ma " + message.member + "?");
+	}
+
+	let text = "";
+	
+	const parseResults = await fetch('https://reykunyu.wimiso.nl/api/parse?tìpawm=' + query)
+		.then(response => response.json())
+		.catch(error => {
+			message.channel.send("Something went wrong while parsing. This shouldn't happen, so let me ping <@163315929760006144> to get the issue fixed.")
+			return;
+		});
+
+	if (parseResults) {
+		let correct = parseResults[0]['errors'].length === 0;
+		let lastTranslation = null;
+		for (let i = 0; i < parseResults.length; i++) {
+			let result = parseResults[i];
+			if (i > 0 && result.penalty > parseResults[0].penalty) {
+				break;
+			}
+			for (let j = 0; j < result['errors'].length; j++) {
+				text += ":warning: " + result['errors'][j].replace(/[\[\]]/g, '**') + "\n";
+			}
+			let translation = result.translation;
+			if (correct && translation !== lastTranslation) {
+				text += outputTree(result.parseTree, "> ", "> ");
+				text += "→ \"" + translation + "\"";
+				lastTranslation = translation;
+			}
+		}
+	}
+
+	message.channel.send(text);
+}
+
+function outputTree(tree, prefix1 = '', prefix2 = '', role = null) {
+
+	let output = '';
+	
+	let mainText = '';
+	if (role) {
+		mainText += '*' + role + ':* ';
+	}
+	mainText += '**' + tree['word'] + '**';
+	if (tree['translation']) {
+		mainText += '  → "' + tree['translation'] + '"';
+	}
+	output += prefix1 + mainText + '\n';
+
+	if (tree['children']) {
+		let prefixLength = 1;
+		for (let i = 0; i < tree['children'].length; i++) {
+			if (i === tree['children'].length - 1) {
+				output += outputTree(tree['children'][i],
+					prefix2 + spaces(prefixLength) + "・",
+					prefix2 + spaces(prefixLength + 1),
+					tree['roles'][i]);
+			} else {
+				output += outputTree(tree['children'][i],
+					prefix2 + spaces(prefixLength) + "・",
+					prefix2 + spaces(prefixLength + 1),
+					tree['roles'][i]);
+			}
+		}
+	}
+
+	return output;
+}
+
+function spaces(n) {
+	return Array(n + 1).join('　');
 }
 
