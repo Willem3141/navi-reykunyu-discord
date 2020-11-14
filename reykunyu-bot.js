@@ -123,22 +123,11 @@ function sendSingleWordResult(result, message) {
 		
 		text += '\n';
 
-		if ((r["type"] === "n" || r["type"] === "n:pr" || r.hasOwnProperty("conjugation")) && r["conjugated"]["result"].toLowerCase() !== r["conjugated"]["root"].toLowerCase()) {
-			text += '    ';
-			text += nounConjugation(r["conjugated"]);
-			text += '\n';
-		}
-
-		if (r["type"].substring(0, 2) === "v:" && r["conjugated"]["result"].toLowerCase() !== r["conjugated"]["root"].toLowerCase()) {
-			text += '    ';
-			text += verbConjugation(r["conjugated"]);
-			text += '\n';
-		}
-
-		if (r["type"] === "adj" && r["conjugated"]["form"] !== "predicative") {
-			text += '    ';
-			text += adjectiveConjugation(r["conjugated"]);
-			text += '\n';
+		if (r.hasOwnProperty("conjugated")) {
+			let explanation = conjugation(r["conjugated"]);
+			if (explanation) {
+				text += '    ' + explanation + '\n';
+			}
 		}
 
 		text += '    ';
@@ -204,6 +193,39 @@ function pronunciationToMarkdown(pronunciation, type) {
 		text += " si";
 	}
 	
+	return text;
+}
+
+function conjugation(conjugation, short) {
+	let text = "";
+
+	for (let i = 0; i < conjugation.length; i++) {
+		let type = conjugation[i]["type"];
+		let c = conjugation[i]["conjugation"];
+		if (c["result"].toLowerCase() == c["root"].toLowerCase()) {
+			continue;
+		}
+		
+		if (text !== "" & !short) {
+			text += "; ";
+		}
+
+		switch (type) {
+			case "n":
+				text += nounConjugation(c, short);
+				break;
+			case "v":
+				text += verbConjugation(c, short);
+				break;
+			case "adj":
+				text += adjectiveConjugation(c, short);
+				break;
+			case "v_to_n":
+				text += verbToNounConjugation(c, short);
+				break;
+		}
+	}
+
 	return text;
 }
 
@@ -274,6 +296,22 @@ function adjectiveConjugation(conjugation, short) {
 	return text;
 }
 
+function verbToNounConjugation(conjugation, short) {
+	let text = short ? '< ' : '→  ';
+	
+	text += conjugation["root"];
+	
+	text += " + ";
+	text += conjugation["affixes"][0];
+	
+	if (!short) {
+		text += "  =  ";
+		text += '**' + conjugation["result"] + '**';
+	}
+	
+	return text;
+}
+
 async function sendSentenceResult(results, message, query) {
 
 	text = '';
@@ -320,20 +358,13 @@ function singleLineResultMarkdown(r, message) {
 		text += "+ **si**, ";
 	}
 	text += toReadableType(r["type"]);
-	if ((r["type"] === "n" || r["type"] === "n:pr" || r.hasOwnProperty("conjugation")) &&
-			r.hasOwnProperty('conjugated') &&
-			r["conjugated"][0].toLowerCase() !== r["conjugated"][1].toLowerCase()) {
-		text += ', ' + nounConjugation(r["conjugated"], true);
+	if (r.hasOwnProperty("conjugated")) {
+		let explanation = conjugation(r["conjugated"], true);
+		if (explanation) {
+			text += ', ' + explanation;
+		}
 	}
 
-	if (r["type"].substring(0, 2) === "v:" && r.hasOwnProperty('conjugated') &&
-			r["conjugated"][0].toLowerCase() !== r["conjugated"][1].toLowerCase()) {
-		text += ', ' + verbConjugation(r["conjugated"], true);
-	}
-
-	if (r["type"] === "adj" && r.hasOwnProperty('conjugated') && r["conjugated"][2] !== "predicative") {
-		text += ', ' + adjectiveConjugation(r["conjugated"], true);
-	}
 	text += ') ';
 
 	if (r["status"]) {
