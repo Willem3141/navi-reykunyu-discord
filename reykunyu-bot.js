@@ -2,6 +2,8 @@
  * Discord bot for Reykunyu
  */
 
+const nouns = require('./nouns');
+
 const fs = require('fs');
 const config = JSON.parse(fs.readFileSync('config.json'));
 
@@ -28,7 +30,9 @@ client.on('message', async message => {
 		message.channel.send("Reykunyu is a dictionary bot that allows you to look up the translation of Na'vi words.\n\n" +
 				"**Use `!run lì'u` to translate the Na'vi word `lì'u` into English.**\n" +
 				"Reykunyu understands most conjugated forms as well, and will automatically return the translation of the root word. " +
-				"If you provide more than one word, it will translate all of them.\n\n" +
+				"If you provide more than one word, it will translate all of them. "+
+				"If you use `!run random`, Reykunyu will return a random word from the dictionary " +
+				"(`!run random <number>` will return the specified number of random words).\n\n" +
 				"**Use `!find word` to find Na'vi words whose English definition contains `word`.**\n" +
 				"Alternatively, `!finde`, `!trouve`, and `!vind` allow you to search in German, French, or Dutch.\n\n" +
 				"**Use `!tslam sentence` to run a grammar analyzer on your sentence.**\n" +
@@ -37,6 +41,10 @@ client.on('message', async message => {
 				"Be aware: this is experimental, so it may produce incorrect results, and works for very simple sentences only.\n\n" +
 				"Reykunyu responds to DMs as well, and in that case you can omit `!run`. " +
 				"You can also use Reykunyu's website with more functionality (conjugation tables, word sources, ...): https://reykunyu.wimiso.nl/");
+		return;
+	}
+	if (text.startsWith('!run random')) {
+		doRandomWord(message);
 		return;
 	}
 
@@ -84,16 +92,24 @@ async function doNaviSearch(query, message) {
 	if (response.length === 0) {
 		return;
 	} else if (response.length === 1) {
-		sendSingleWordResult(response[0]['sì\'eyng'], message);
+		sendSingleWordResult(response[0]['sì\'eyng'], response[0]['aysämok'], message);
 	} else {
 		sendSentenceResult(response, message, query);
 	}
 }
 
-function sendSingleWordResult(result, message) {
+function sendSingleWordResult(result, suggestions, message) {
 
 	if (result.length === 0) {
-		message.channel.send('No results found.');
+		if (suggestions.length) {
+			suggestions = suggestions.map(a => "**" + a + "**");
+			console.log(suggestions);
+			message.channel.send('No results found.\n' +
+					"(Did you mean " + suggestions.join(', ').replace(/, ([^,]*)$/, " or $1") + "?)"
+					);
+		} else {
+			message.channel.send('No results found.');
+		}
 		return;
 	}
 
@@ -123,19 +139,19 @@ function sendSingleWordResult(result, message) {
 		
 		text += '\n';
 
-		if ((r["type"] === "n" || r["type"] === "n:pr" || r.hasOwnProperty("conjugation")) && r["conjugated"][0].toLowerCase() !== r["conjugated"][1].toLowerCase()) {
+		if ((r["type"] === "n" || r["type"] === "n:pr" || r.hasOwnProperty("conjugation")) && r.hasOwnProperty("conjugated") && r["conjugated"][0].toLowerCase() !== r["conjugated"][1].toLowerCase()) {
 			text += '    ';
 			text += nounConjugation(r["conjugated"]);
 			text += '\n';
 		}
 
-		if (r["type"].substring(0, 2) === "v:" && r["conjugated"][0].toLowerCase() !== r["conjugated"][1].toLowerCase()) {
+		if (r["type"].substring(0, 2) === "v:" && r.hasOwnProperty("conjugated") && r["conjugated"][0].toLowerCase() !== r["conjugated"][1].toLowerCase()) {
 			text += '    ';
 			text += verbConjugation(r["conjugated"]);
 			text += '\n';
 		}
 
-		if (r["type"] === "adj" && r["conjugated"][2] !== "predicative") {
+		if (r["type"] === "adj" && r.hasOwnProperty("conjugated") && r["conjugated"][2] !== "predicative") {
 			text += '    ';
 			text += adjectiveConjugation(r["conjugated"]);
 			text += '\n';
@@ -151,8 +167,37 @@ function sendSingleWordResult(result, message) {
 			text += r['meaning_note'];
 			text += '*\n';
 		}
+
+		if (r["conjugation"]) {
+			text += nounConjugationSection(r["conjugation"]["forms"], r["conjugation_note"]);
+		} else if (r["type"] === "n") {
+			text += nounConjugationSection(createNounConjugation(r["na'vi"], r["type"], false), r["conjugation_note"]);
+		} else if (r["type"] === "n:pr") {
+			text += nounConjugationSection(createNounConjugation(r["na'vi"], r["type"], true), r["conjugation_note"]);
+		//} else if (r["type"] === "adj") {
+		//	$result.append(adjectiveConjugationSection(r["na'vi"], r["type"], r["conjugation_note"]));
+		}
 	}
 	message.channel.send(text);
+}
+
+function createNounConjugation(word, type, uncountable) {
+
+	let conjugation = [];
+	let caseFunctions = [nouns.subjective, nouns.agentive, nouns.patientive, nouns.dative, nouns.genitive, nouns.topical]
+	let plurals = [nouns.singular(word), nouns.dual(word), nouns.trial(word), nouns.plural(word)]
+
+	for (let j = 0; j < 4; j++) {
+		let row = [];
+		if (!uncountable || j === 0) {
+			for (let i = 0; i < 6; i++) {
+				row.push(caseFunctions[i](plurals[j]));
+			}
+		}
+		conjugation.push(row);
+	}
+
+	return conjugation;
 }
 
 function toReadableType(type) {
@@ -272,6 +317,66 @@ function adjectiveConjugation(conjugation, short) {
 	}
 
 	return text;
+}
+
+function nounConjugationSection(conjugation) {
+	let text = "";
+	for (let j = 1; j < 4; j++) {
+		if (conjugation[j].length === 0) {
+			continue;
+		}
+		let c = conjugation[j][0];
+		let formatted = nounConjugationString(c);
+		if (j > 1) {
+			text += ", ";
+		}
+		text += formatted;
+	}
+
+	if (text !== "") {
+		text += "  /  ";
+	}
+
+	for (let i = 1; i < 6; i++) {
+		let c;
+		if (conjugation[0].length === 0) {
+			c = conjugation[1][i];
+		} else {
+			c = conjugation[0][i];
+		}
+		let formatted = nounConjugationString(c);
+		if (i > 1) {
+			text += ", ";
+		}
+		text += formatted;
+	}
+	return "    *Conjugated forms:*\n        " + text + "\n";
+}
+
+function nounConjugationString(c) {
+	let formatted = "";
+	c = c.split(";");
+	for (let k = 0; k < c.length; k++) {
+		if (k > 0) {
+			formatted += " *or* ";
+		}
+
+		let m = c[k].match(/(.*-\)?)(.*)(-.*)/);
+
+		if (m) {
+			if (m[1] !== "-") {
+				formatted += "**" + m[1] + "**";
+			}
+			formatted += m[2].replace(/\{(.*)\}/, "**$1**");
+			if (m[3] !== "-") {
+				formatted += "**" + m[3] + "**";
+			}
+		} else {
+			formatted += c[k];
+		}
+	}
+	formatted = formatted.replace(/\*\*\*\*/g, "");
+	return formatted;
 }
 
 async function sendSentenceResult(results, message, query) {
@@ -427,13 +532,24 @@ async function doParse(query, message) {
 			return;
 		});
 
-	if (parseResults) {
-		let correct = parseResults[0]['errors'].length === 0;
+	if (parseResults && parseResults['lexingErrors']) {
+		for (let i = 0; i < parseResults['lexingErrors'].length; i++) {
+			const error = parseResults['lexingErrors'][i];
+			text += ":warning: " + error.replace(/[\[\]]/g, '**') + "\n";
+		}
+	}
+
+	if (parseResults && parseResults['results'] && parseResults['results'].length) {
+		let results = parseResults['results'];
+		let correct = results[0]['errors'].length === 0;
 		let lastTranslation = null;
-		for (let i = 0; i < parseResults.length; i++) {
-			let result = parseResults[i];
-			if (i > 0 && result.penalty > parseResults[0].penalty) {
+		for (let i = 0; i < results.length; i++) {
+			let result = results[i];
+			if (i > 0 && result.penalty > results[0].penalty) {
 				break;
+			}
+			if (i > 0) {
+				text += "\n\n";
 			}
 			for (let j = 0; j < result['errors'].length; j++) {
 				text += ":warning: " + result['errors'][j].replace(/[\[\]]/g, '**') + "\n";
@@ -445,6 +561,8 @@ async function doParse(query, message) {
 				lastTranslation = translation;
 			}
 		}
+	} else {
+		text += "Your sentence could not be parsed.\n";
 	}
 
 	message.channel.send(text);
@@ -486,5 +604,56 @@ function outputTree(tree, prefix1 = '', prefix2 = '', role = null) {
 
 function spaces(n) {
 	return Array(n + 1).join('　');
+}
+
+async function doRandomWord(message) {
+	let text = message.content;
+	text = text.replace("!run random", "");
+	text = text.trim();
+	let number = 1;
+	if (text !== "") {
+		number = Number(text);
+		if (isNaN(number) || number < 1 || !Number.isInteger(number)) {
+			message.channel.send("If you want to indicate how many random words you want, please put a positive integer behind `!run random`.");
+			return;
+		}
+	}
+	let tooMany = false;
+	if (number > 10) {
+		number = 10;
+		tooMany = true;
+	}
+	const response = await fetch('https://reykunyu.wimiso.nl/api/random?holpxay=' + number)
+		.then(response => response.json())
+		.catch(error => {
+			message.channel.send("Something went wrong while getting your random words. This shouldn't happen, so let me ping <@163315929760006144> to get the issue fixed.")
+			return;
+		});
+	console.log(response);
+
+	if (number === 1) {
+		sendSingleWordResult(response, [], message);
+	} else {
+		text = '';
+
+		for (let i = 0; i < response.length; i++) {
+			if (i > 0) {
+				text += '\n';
+			}
+
+			text += '**'
+			text += response[i]['na\'vi'];
+			text += '**'
+			text += '    '
+			text += singleLineResultMarkdown(response[i], message);
+			text += getTranslation(message, response[i]['translations'][0]);
+		}
+
+		if (tooMany) {
+			text += '\n(returning at most 10 random words)';
+		}
+
+		message.channel.send(text);
+	}
 }
 
