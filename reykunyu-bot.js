@@ -123,19 +123,19 @@ function sendSingleWordResult(result, message) {
 		
 		text += '\n';
 
-		if ((r["type"] === "n" || r["type"] === "n:pr" || r.hasOwnProperty("conjugation")) && r["conjugated"][0].toLowerCase() !== r["conjugated"][1].toLowerCase()) {
+		if ((r["type"] === "n" || r["type"] === "n:pr" || r.hasOwnProperty("conjugation")) && r["conjugated"]["result"].toLowerCase() !== r["conjugated"]["root"].toLowerCase()) {
 			text += '    ';
 			text += nounConjugation(r["conjugated"]);
 			text += '\n';
 		}
 
-		if (r["type"].substring(0, 2) === "v:" && r["conjugated"][0].toLowerCase() !== r["conjugated"][1].toLowerCase()) {
+		if (r["type"].substring(0, 2) === "v:" && r["conjugated"]["result"].toLowerCase() !== r["conjugated"]["root"].toLowerCase()) {
 			text += '    ';
 			text += verbConjugation(r["conjugated"]);
 			text += '\n';
 		}
 
-		if (r["type"] === "adj" && r["conjugated"][2] !== "predicative") {
+		if (r["type"] === "adj" && r["conjugated"]["form"] !== "predicative") {
 			text += '    ';
 			text += adjectiveConjugation(r["conjugated"]);
 			text += '\n';
@@ -211,24 +211,24 @@ function nounConjugation(conjugation, short) {
 	let text = short ? '< ' : '→  ';
 	
 	for (let i = 0; i <= 2; i++) {
-		if (conjugation[2][i]) {
-			text += conjugation[2][i];
+		if (conjugation["affixes"][i]) {
+			text += conjugation["affixes"][i];
 			text += " + ";
 		}
 	}
 	
-	text += conjugation[1];
+	text += conjugation["root"];
 	
 	for (let i = 3; i <= 6; i++) {
-		if (conjugation[2][i]) {
+		if (conjugation["affixes"][i]) {
 			text += " + ";
-			text += conjugation[2][i];
+			text += conjugation["affixes"][i];
 		}
 	}
 	
 	if (!short) {
 		text += "  =  ";
-		text += '**' + conjugation[0] + '**';
+		text += '**' + conjugation["result"] + '**';
 	}
 	
 	return text;
@@ -236,18 +236,18 @@ function nounConjugation(conjugation, short) {
 
 function verbConjugation(conjugation, short) {
 	let text = short ? '< ' : '→  ';
-	text += conjugation[1];
+	text += conjugation["root"];
 
 	for (let i = 0; i < 3; i++) {
-		if (conjugation[2][i]) {
+		if (conjugation["infixes"][i]) {
 			text += " + ";
-			text += "‹" + conjugation[2][i] + "›";
+			text += "‹" + conjugation["infixes"][i] + "›";
 		}
 	}
 	
 	if (!short) {
 		text += "  =  ";
-		text += '**' + conjugation[0] + '**';
+		text += '**' + conjugation["result"] + '**';
 	}
 
 	return text;
@@ -256,19 +256,19 @@ function verbConjugation(conjugation, short) {
 function adjectiveConjugation(conjugation, short) {
 	let text = short ? '< ' : '→  ';
 
-	if (conjugation[2] === "postnoun") {
+	if (conjugation["form"] === "postnoun") {
 		text += "a + ";
 	}
 
-	text += conjugation[1];
+	text += conjugation["root"];
 
-	if (conjugation[2] === "prenoun") {
+	if (conjugation["form"] === "prenoun") {
 		text += " + a";
 	}
 	
 	if (!short) {
 		text += "  =  ";
-		text += '**' + conjugation[0] + '**';
+		text += '**' + conjugation["result"] + '**';
 	}
 
 	return text;
