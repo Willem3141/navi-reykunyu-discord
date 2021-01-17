@@ -33,16 +33,16 @@ client.on('message', async message => {
 				"If you provide more than one word, it will translate all of them. "+
 				"If you use `!run random`, Reykunyu will return a random word from the dictionary " +
 				"(`!run random <number>` will return the specified number of random words).\n\n" +
-				"**Use `!plltxe word` to get a recording of the pronunciation of `word`.**\n" +
-				"This is an experimental feature, and most words do not have recordings yet.\n\n" +
 				"**Use `!find word` to find Na'vi words whose English definition contains `word`.**\n" +
 				"Alternatively, `!finde`, `!trouve`, and `!vind` allow you to search in German, French, or Dutch.\n\n" +
-				"**Use `!tslam sentence` to run a grammar analyzer on your sentence.**\n" +
+				/*"**Use `!tslam sentence` to run a grammar analyzer on your sentence.**\n" +
 				"This will produce a translation if it could understand the sentence, or an error message if it could not " +
 				"(because either your sentence was incorrect, or Reykunyu wasn't smart enough to understand it). " +
-				"Be aware: this is experimental, so it may produce incorrect results, and works for very simple sentences only.\n\n" +
-				"Reykunyu responds to DMs as well, and in that case you can omit `!run`. " +
-				"You can also use Reykunyu's website with more functionality (conjugation tables, word sources, ...): https://reykunyu.wimiso.nl/");
+				"Be aware: this is experimental, so it may produce incorrect results, and works for very simple sentences only.\n\n" +*/
+				"Reykunyu responds to DMs as well, and in that case you can omit `!run`." +
+				"You can also use Reykunyu's website with more functionality (conjugation tables, word sources, ...): https://reykunyu.wimiso.nl/\n\n" +
+				"Reykunyu is maintained by <@163315929760006144>, but uses data collected by many people; see `!run credits` for details.",
+				{'allowedMentions': {'users': []}});
 		return;
 	}
 	if (text.startsWith('!run random')) {
