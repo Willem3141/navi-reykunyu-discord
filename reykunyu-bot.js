@@ -123,7 +123,7 @@ function sendSingleWordResult(result, suggestions, message) {
 	for (let i = 0; i < result.length; i++) {
 		let r = result[i];
 		text += '**'
-		text += r['na\'vi'];
+		text += lemmaForm(r['na\'vi'], r['type']);
 		if (r['type'] === 'n:si') {
 			text += ' si';
 		}
@@ -384,7 +384,7 @@ function affixesSection(message, affixes) {
 	let text = "";
 	for (let a of affixes) {
 		const affix = a['affix'];
-		text += '        **' + affix["na'vi"] + "**: ";
+		text += '        **' + lemmaForm(affix["na'vi"], affix['type']) + "**    ";
 		text += getTranslation(message, affix['translations'][0]);
 		text += "\n";
 	}
@@ -568,7 +568,7 @@ async function doReverseSearch(query, language, message) {
 		}
 
 		text += '**'
-		text += r['na\'vi'];
+		text += lemmaForm(r['na\'vi'], r['type']);
 		text += '**'
 		text += '    '
 
@@ -584,6 +584,19 @@ async function doReverseSearch(query, language, message) {
 function escapeRegex(string) {
 	// https://stackoverflow.com/a/3561711/12243952
 	return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+}
+
+function lemmaForm(word, type) {
+	if (type === "n:si") {
+		return word + ' si';
+	} else if (type === 'aff:pre') {
+		return word + "-";
+	} else if (type === 'aff:in') {
+		return '‹' + word + '›';
+	} else if (type === 'aff:suf') {
+		return '-' + word;
+	}
+	return word;
 }
 
 async function doParse(query, message) {
