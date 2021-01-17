@@ -42,7 +42,17 @@ client.on('message', async message => {
 				"Reykunyu responds to DMs as well, and in that case you can omit `!run`." +
 				"You can also use Reykunyu's website with more functionality (conjugation tables, word sources, ...): https://reykunyu.wimiso.nl/\n\n" +
 				"Reykunyu is maintained by <@163315929760006144>, but uses data collected by many people; see `!run credits` for details.",
-				{'allowedMentions': {'users': []}});
+				{'allowedMentions': {'parse': []}});
+		return;
+	}
+	if (text === '!run credits') {
+		message.channel.send("Thanks to the following projects and people for creating the data sources used by Reykunyu:\n\n" +
+				"    \* The **Eana Eltu** database (licensed under CC-BY-SA-NC 4.0) for the base dictionary data (updated until ~2019).\n" +
+				"    \* **Plumps** for collecting example sentences in his Annotated Dictionary.\n" +
+				"    \* **Eana Unil** for creating the animal drawings (try to search for some Pandoran animals and you may find them!)\n" +
+				"    \* Everyone who spotted mistakes and suggested improvements.\n\n" +
+				"*Irayo nìtxan ma frapo!*",
+				{'allowedMentions': {'parse': []}});
 		return;
 	}
 	if (text.startsWith('!run random')) {
