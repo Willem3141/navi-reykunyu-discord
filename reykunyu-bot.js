@@ -33,6 +33,8 @@ client.on('message', async message => {
 				"If you provide more than one word, it will translate all of them. "+
 				"If you use `!run random`, Reykunyu will return a random word from the dictionary " +
 				"(`!run random <number>` will return the specified number of random words).\n\n" +
+				"**Use `!plltxe word` to get a recording of the pronunciation of `word`.**\n" +
+				"This is an experimental feature, and most words do not have recordings yet.\n\n" +
 				"**Use `!find word` to find Na'vi words whose English definition contains `word`.**\n" +
 				"Alternatively, `!finde`, `!trouve`, and `!vind` allow you to search in German, French, or Dutch.\n\n" +
 				"**Use `!tslam sentence` to run a grammar analyzer on your sentence.**\n" +
@@ -68,6 +70,9 @@ client.on('message', async message => {
 	} else if (text.startsWith('!tslam ')) {
 		query = text.substring(7);
 		doParse(query, message);
+	} else if (text.startsWith('!plltxe ')) {
+		query = text.substring(8);
+		doSpeak(query, message);
 	} else if (message.channel.type === "dm") {
 		doNaviSearch(text, message);
 	} else {
@@ -132,7 +137,7 @@ function sendSingleWordResult(result, suggestions, message) {
 			text += r['infixes'].replace(/\./g, '·');
 		}
 		text += ')';
-	
+
 		if (r["status"]) {
 			text += '  :warning: ' + r["status"];
 		}
@@ -157,6 +162,10 @@ function sendSingleWordResult(result, suggestions, message) {
 			text += '*\n';
 		}
 
+		if (r["affixes"] && r["affixes"].length) {
+			text += affixesSection(message, r["affixes"]);
+		}
+
 		if (r["conjugation"]) {
 			text += nounConjugationSection(r["conjugation"]["forms"], r["conjugation_note"]);
 		} else if (r["type"] === "n") {
@@ -168,6 +177,17 @@ function sendSingleWordResult(result, suggestions, message) {
 		}
 	}
 	message.channel.send(text);
+
+	for (let i = 0; i < result.length; i++) {
+		let r = result[i];
+		if (r['image']) {
+			text = '';
+			text += '\n' + r["na'vi"] + ' drawn by Eana Unil:';
+			message.channel.send(text, {
+				'file': 'https://reykunyu.wimiso.nl/ayrel/' + r['image']
+			});
+		}
+	}
 }
 
 function createNounConjugation(word, type, uncountable) {
@@ -213,6 +233,9 @@ function toReadableType(type) {
 		"v:cp": "vcp.",
 		"phr": "phr.",
 		"inter": "inter.",
+		"aff:pre": "pref.",
+		"aff:in": "inf.",
+		"aff:suf": "suf."
 	}
 	return '*' + mapping[type] + '*';
 }
@@ -251,8 +274,8 @@ function conjugation(conjugation, short) {
 			continue;
 		}
 		
-		if (text !== "" & !short) {
-			text += "; ";
+		if (text !== "") {
+			text += short ? '; ' : '\n    ';
 		}
 
 		switch (type) {
@@ -357,6 +380,17 @@ function verbToNounConjugation(conjugation, short) {
 	return text;
 }
 
+function affixesSection(message, affixes) {
+	let text = "";
+	for (let a of affixes) {
+		const affix = a['affix'];
+		text += '        **' + affix["na'vi"] + "**: ";
+		text += getTranslation(message, affix['translations'][0]);
+		text += "\n";
+	}
+	return "    *Affixes:*\n" + text;
+}
+
 function nounConjugationSection(conjugation) {
 	let text = "";
 	for (let j = 1; j < 4; j++) {
@@ -375,6 +409,7 @@ function nounConjugationSection(conjugation) {
 		text += "  /  ";
 	}
 
+	let first = true;
 	for (let i = 1; i < 6; i++) {
 		let c;
 		if (conjugation[0].length === 0) {
@@ -382,10 +417,14 @@ function nounConjugationSection(conjugation) {
 		} else {
 			c = conjugation[0][i];
 		}
+		if (!c) {
+			continue;
+		}
 		let formatted = nounConjugationString(c);
-		if (i > 1) {
+		if (!first) {
 			text += ", ";
 		}
+		first = false;
 		text += formatted;
 	}
 	return "    *Conjugated forms:*\n        " + text + "\n";
@@ -686,5 +725,27 @@ async function doRandomWord(message) {
 
 		message.channel.send(text);
 	}
+}
+
+async function doSpeak(query, message) {
+	query = query.split("-");
+	const soundUrl = 'https://reykunyu.wimiso.nl/api/sound?word=' + encodeURIComponent(query[0]) + "&type=" + encodeURIComponent(query[1]);
+	const response = await fetch(soundUrl)
+		.then(response => {
+			if (response.status !== 200) {
+				throw "no sound file";
+			}
+		})
+		.catch(error => {
+			message.channel.send("There's no audio file available yet for **" + query[0] + "**.");
+			return;
+		});
+
+	message.channel.send("Pronunciation of **" + query[0] + "**:", {
+		"files": [{
+			"attachment": "../navi-tsim/fam/" + query[0] + "-" + query[1] + ".mp3",
+			"name": "sound.mp3"
+		}]
+	});
 }
 
