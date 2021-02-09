@@ -134,9 +134,6 @@ function sendSingleWordResult(result, suggestions, message) {
 		let r = result[i];
 		text += '**'
 		text += lemmaForm(r['na\'vi'], r['type']);
-		if (r['type'] === 'n:si') {
-			text += ' si';
-		}
 		text += '**';
 
 		text += '  (' + toReadableType(r["type"]);
