@@ -118,7 +118,6 @@ function sendSingleWordResult(result, suggestions, message) {
 	if (result.length === 0) {
 		if (suggestions.length) {
 			suggestions = suggestions.map(a => "**" + a + "**");
-			console.log(suggestions);
 			message.channel.send('No results found.\n' +
 					"(Did you mean " + suggestions.join(', ').replace(/, ([^,]*)$/, " or $1") + "?)"
 					);
@@ -719,7 +718,6 @@ async function doRandomWord(message) {
 			message.channel.send("Something went wrong while getting your random words. This shouldn't happen, so let me ping <@163315929760006144> to get the issue fixed.")
 			return;
 		});
-	console.log(response);
 
 	if (number === 1) {
 		sendSingleWordResult(response, [], message);
