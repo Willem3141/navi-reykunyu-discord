@@ -12,6 +12,24 @@ const fetch = require('node-fetch');
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
+const TurndownService = require('turndown');
+const turndownService = new TurndownService({strongDelimiter: '`'});
+turndownService.addRule('link', {
+	filter: ['a'],
+	replacement: function (content) {
+		return content;
+	}
+});
+turndownService.addRule('small-caps', {
+	filter: function (node, options) {
+		const nodeClass = node.getAttribute('class');
+		return nodeClass === 'source-link';
+	},
+	replacement: function (content) {
+		return '[' + content.toUpperCase() + ']';
+	}
+});
+
 client.login(config['bot-token']);
 
 client.once('ready', () => {
@@ -39,6 +57,10 @@ client.on('message', async message => {
 				"This will produce a translation if it could understand the sentence, or an error message if it could not " +
 				"(because either your sentence was incorrect, or Reykunyu wasn't smart enough to understand it). " +
 				"Be aware: this is experimental, so it may produce incorrect results, and works for very simple sentences only.\n\n" +*/
+				"**Use `!annotated lì'u` to search in Plumps's Annotated Dictionary for the Na'vi word `lì'u`.**\n" +
+				"The Annotated Dictionary gives not only definitions, but also tells you how to use a word in practice, by providing example sentences and other information. The `!annotated` command does not understand conjugated forms, so make sure you are searching for a root word. If you are not sure what the root word is, you can use `!run` to find the root word.\n\n" +
+				"**Use `!ngampam lì'u` to find words that rhyme with `lì'u`.**\n" +
+				"The results are grouped on syllable count and stressed syllable.\n\n" +
 				"Reykunyu responds to DMs as well, and in that case you can omit `!run`." +
 				"You can also use Reykunyu's website with more functionality (conjugation tables, word sources, ...): https://reykunyu.wimiso.nl/\n\n" +
 				"Reykunyu is maintained by <@163315929760006144>, but uses data collected by many people; see `!run credits` for details.",
@@ -48,8 +70,8 @@ client.on('message', async message => {
 	if (text === '!run credits') {
 		message.channel.send("Thanks to the following projects and people for creating the data sources used by Reykunyu:\n\n" +
 				"    \* The **Eana Eltu** database (licensed under CC-BY-SA-NC 4.0) for the base dictionary data (updated until ~2019).\n" +
-				"    \* **Plumps** for collecting example sentences in his Annotated Dictionary.\n" +
-				"    \* **Eana Unil** for creating the animal drawings (try to search for some Pandoran animals and you may find them!)\n" +
+				"    \* **Plumps** for creating the Annotated Dictionary and allowing Reykunyu to use it for searches with `!annotated`.\n" +
+				"    \* **Eana Unil** for creating the animal drawings (try searching for some Pandoran animals and you may find them!)\n" +
 				"    \* Everyone who spotted mistakes and suggested improvements.\n\n" +
 				"*Irayo nìtxan ma frapo!*",
 				{'allowedMentions': {'parse': []}});
@@ -64,6 +86,9 @@ client.on('message', async message => {
 
 	if (text.startsWith('!run ')) {
 		query = text.substring(5);
+		/*if (message.channel.type !== "dm") {
+			query = "ngaru lu fpom srak?";
+		}*/
 		doNaviSearch(query, message);
 	} else if (text.startsWith('!find ')) {
 		query = text.substring(6);
@@ -83,6 +108,12 @@ client.on('message', async message => {
 	} else if (text.startsWith('!plltxe ')) {
 		query = text.substring(8);
 		doSpeak(query, message);
+	} else if (text.startsWith('!ngampam ')) {
+		query = text.substring(9);
+		doRhymes(query, message);
+	} else if (text.startsWith('!annotated ')) {
+		query = text.substring(11);
+		doAnnotatedSearch(query, message);
 	} else if (message.channel.type === "dm") {
 		doNaviSearch(text, message);
 	} else {
@@ -587,6 +618,56 @@ async function doReverseSearch(query, language, message) {
 	message.channel.send(text);
 }
 
+async function doRhymes(query, message) {
+	const response = await fetch('https://reykunyu.wimiso.nl/api/rhymes?tìpawm=' + query)
+		.then(response => response.json())
+		.catch(error => {
+			message.channel.send("Something went wrong while searching. This shouldn't happen, so let me ping <@163315929760006144> to get the issue fixed.")
+			return;
+		});
+
+	let text = '';
+
+	if (response.length === 0) {
+		message.channel.send('No results found.');
+		return;
+	}
+
+	result = '';
+	for (const syllableCount in response) {
+		if (response[syllableCount]) {
+			if (syllableCount == 0) {
+				result += '**unknown:** ';
+			} else {
+				result += '**' + syllableCount + ' syllable' + (syllableCount === 1 ? '' : 's') + ':** ';
+			}
+			let needsSemicolon = false;
+			for (const stress in response[syllableCount]) {
+				if (response[syllableCount][stress]) {
+					if (needsSemicolon) {
+						result += '; ';
+					}
+					if (syllableCount != 0) {
+						result += '**(' + stress + ')** ';
+					}
+					let needsComma = false;
+					for (const word of response[syllableCount][stress]) {
+						if (needsComma) {
+							result += ', ';
+						}
+						result += lemmaForm(word['na\'vi'], word['type']);
+						needsComma = true;
+					}
+					needsSemicolon = true;
+				}
+			}
+			result += '\n';
+		}
+	}
+
+	message.channel.send(result);
+}
+
 function escapeRegex(string) {
 	// https://stackoverflow.com/a/3561711/12243952
 	return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -767,3 +848,29 @@ async function doSpeak(query, message) {
 	});
 }
 
+async function doAnnotatedSearch(query, message) {
+	const response = await fetch('https://reykunyu.wimiso.nl/api/annotated/search?query=' + encodeURIComponent(query))
+		.then(response => response.json())
+		.catch(error => {
+			message.channel.send("Something went wrong while searching. This shouldn't happen, so let me ping <@163315929760006144> to get the issue fixed.")
+			return;
+		});
+
+	if (response.length === 0) {
+		message.channel.send('No results found.\n' +
+				'Note: the `!annotated` command does not understand conjugated forms, so make sure you are searching for a root word. If you are not sure what the root word is, you can use `!run` to find the root word.');
+
+	} else {
+		text = '';
+
+		for (let i = 0; i < response.length; i++) {
+			if (i > 0) {
+				text += "\n\n";
+			}
+			text += '> ' + turndownService.turndown(response[i]).replace(/\n/g, '\n> ');
+		}
+
+		text += '\n*(source: An Annotated Na\'vi Dictionary by Plumps, 2021-05-09)*';
+		message.channel.send(text);
+	}
+}
