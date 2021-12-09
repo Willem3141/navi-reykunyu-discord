@@ -48,7 +48,7 @@ function getSingleWordResult(result, suggestions, language) {
 
 		let r = result[i];
 		text += '**'
-		text += createBareLink(r["na'vi"]);
+		text += createWordLink(language, r, true);
 		text += '**';
 
 		text += '  (' + toReadableType(r["type"]);
@@ -363,15 +363,16 @@ function createBareLink(word) {
 	return utils.markdownLink(word, url);
 }
 
-// with translation
-function createWordLink(language, link) {
+function createWordLink(language, link, hideTranslation) {
 	if (typeof link === "string") {
 		return link;
 	} else {
 		let url = "https://reykunyu.wimiso.nl/?q=" + link["na'vi"];
 		let lemma = lemmaForm(link["na'vi"], link["type"]);
 		let result = utils.markdownLink(lemma, url);
-		result += " (" + getShortTranslation(language, link) + ")";
+		if (!hideTranslation) {
+			result += " (" + getShortTranslation(language, link) + ")";
+		}
 		return result;
 	}
 }
@@ -531,6 +532,7 @@ function getTranslation(language, translation) {
 }
 
 function lemmaForm(word, type) {
+	console.log('lemma form of', word, type);
 	if (type === "n:si" || type === "nv:si") {
 		return word + ' si';
 	} else if (type === 'aff:pre') {
