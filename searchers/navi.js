@@ -69,7 +69,7 @@ function getSingleWordResult(result, suggestions, language) {
 		if (r.hasOwnProperty("conjugated")) {
 			let explanation = conjugation(r["conjugated"]);
 			if (explanation) {
-				text += '> [' + explanation + ']\n';
+				text += '> [' + explanation + ' ]\n';
 			}
 		}
 

@@ -9,8 +9,15 @@ const config = JSON.parse(fs.readFileSync('config.json'));
 
 const fetch = require('node-fetch');
 
-const Discord = require('discord.js');
-const client = new Discord.Client();
+const { Client, Collection, Intents } = require('discord.js');
+const intents = new Intents();
+intents.add(Intents.FLAGS.GUILDS);
+intents.add(Intents.FLAGS.GUILD_MESSAGES);
+intents.add(Intents.FLAGS.DIRECT_MESSAGES);
+const client = new Client({
+    'intents': intents,
+    'partials': ['CHANNEL']
+});
 
 const TurndownService = require('turndown');
 const turndownService = new TurndownService({strongDelimiter: '`'});
@@ -30,13 +37,35 @@ turndownService.addRule('small-caps', {
 	}
 });
 
-client.login(config['bot-token']);
-
-client.once('ready', () => {
-	console.log('Logged in successfully to Discord');
+client.on('raw', packet => {
+    console.log('hi!', packet);
 });
 
-client.on('message', async message => {
+// read events
+const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
+for (const file of eventFiles) {
+	const event = require(`./events/${file}`);
+	if (event.once) {
+		client.once(event.name, (...args) => event.execute(client, ...args));
+	} else {
+		client.on(event.name, (...args) => event.execute(client, ...args));
+	}
+	console.log(`Registered event ${event.name}`);
+}
+
+// read commands
+client.commands = new Collection();
+const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+for (const file of commandFiles) {
+	const command = require(`./commands/${file}`);
+	client.commands.set(command.data.name, command);
+	console.log(`Registered command ${command.data.name}`);
+}
+
+client.login(config['token']);
+
+client.on('messageCreate', async message => {
+	console.log(message.channel);
 
 	// some sanity checks
 	if (message.author.bot) {
@@ -89,18 +118,23 @@ client.on('message', async message => {
 		/*if (message.channel.type !== "dm") {
 			query = "ngaru lu fpom srak?";
 		}*/
+		sendSlashNudge(message);
 		doNaviSearch(query, message);
 	} else if (text.startsWith('!find ')) {
 		query = text.substring(6);
+		sendSlashNudge(message);
 		doReverseSearch(query, 'en', message);
 	} else if (text.startsWith('!finde ')) {
 		query = text.substring(7);
+		sendSlashNudge(message);
 		doReverseSearch(query, 'de', message);
 	} else if (text.startsWith('!trouve ')) {
 		query = text.substring(8);
+		sendSlashNudge(message);
 		doReverseSearch(query, 'fr', message);
 	} else if (text.startsWith('!vind ')) {
 		query = text.substring(6);
+		sendSlashNudge(message);
 		doReverseSearch(query, 'nl', message);
 	} else if (text.startsWith('!tslam ')) {
 		query = text.substring(7);
@@ -114,7 +148,7 @@ client.on('message', async message => {
 	} else if (text.startsWith('!annotated ')) {
 		query = text.substring(11);
 		doAnnotatedSearch(query, message);
-	} else if (message.channel.type === "dm") {
+	} else if (message.channel.type === "DM") {
 		doNaviSearch(text, message);
 	} else {
 		return;
@@ -126,6 +160,15 @@ client.on('message', async message => {
 		message.channel.send("(Trying to get help with Reykunyu? Type `!run help` for more information.)");
 	}
 });
+
+let counter = 0;
+
+async function sendSlashNudge(message) {
+	if (counter % 10 === 0) {
+		message.channel.send("> Kaltxì! ||Hi!|| Sorry for interrupting, but there's a new way to use Reykunyu: `/run`. This is what Discord calls a ‘slash command’, and it should be easier to use because you don't need to remember to use `!run` or `!find` anymore <:hype:823577819892023316>\n> *(For now, the old commands still work as well, but they will be going away in the future.)*");
+	}
+	counter++;
+}
 
 async function doNaviSearch(query, message) {
 	const response = await fetch('https://reykunyu.wimiso.nl/api/fwew?tìpawm=' + encodeURIComponent(query))
@@ -142,6 +185,14 @@ async function doNaviSearch(query, message) {
 	} else {
 		sendSentenceResult(response, message, query);
 	}
+}
+
+async function doNaviSearchTest(query, message) {
+	const text = 'Congratulations, you\'ve found Reykunyu\'s secret test command! [Test](https://reykunyu.wimiso.nl)';
+	const embed = { description: text };
+	message.channel.send({
+		embeds: [embed]
+	});
 }
 
 function sendSingleWordResult(result, suggestions, message) {
@@ -272,7 +323,8 @@ function toReadableType(type) {
 		"inter": "inter.",
 		"aff:pre": "pref.",
 		"aff:in": "inf.",
-		"aff:suf": "suf."
+		"aff:suf": "suf.",
+		"nv:si": "vin."
 	}
 	return '*' + mapping[type] + '*';
 }
@@ -294,7 +346,7 @@ function pronunciationToMarkdown(pronunciation, type) {
 			text += syllables[i];
 		}
 	}
-	if (type === "n:si") {
+	if (type === "n:si" || type === "nv:si") {
 		text += " si";
 	}
 	
@@ -674,7 +726,7 @@ function escapeRegex(string) {
 }
 
 function lemmaForm(word, type) {
-	if (type === "n:si") {
+	if (type === "n:si" || type === "nv:si") {
 		return word + ' si';
 	} else if (type === 'aff:pre') {
 		return word + "-";
