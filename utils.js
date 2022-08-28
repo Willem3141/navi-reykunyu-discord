@@ -93,7 +93,7 @@ function truncate(text) {
 }
 
 function markdownLink(text, url) {
-	url = url.replace(' ', '%20');
-	return "[" + text + "](" + url + ")";
+	url = url.replaceAll(' ', '%20');
+	return "[" + text + "](<" + url + ">)";
 }
 

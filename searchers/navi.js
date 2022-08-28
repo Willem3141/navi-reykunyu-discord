@@ -69,7 +69,7 @@ function getSingleWordResult(result, suggestions, language) {
 		if (r.hasOwnProperty("conjugated")) {
 			let explanation = conjugation(r["conjugated"]);
 			if (explanation) {
-				text += '> [' + explanation + ' ]\n';
+				text += '> [ ' + explanation + ' ]\n';
 			}
 		}
 
@@ -83,6 +83,12 @@ function getSingleWordResult(result, suggestions, language) {
 		}
 		if (r['derived']) {
 			text += derivedSection(language, r["derived"]);
+		}
+		if (r["status_note"]) {
+			text += statusSection(r["status"], r["status_note"]);
+		}
+		if (r["source"] && r["source"].length > 0 && r["source"][0].length > 0) {
+			text += sourceSection(r["source"]);
 		}
 
 		/*if (r["affixes"] && r["affixes"].length) {
@@ -173,19 +179,31 @@ function pronunciationToMarkdown(pronunciation, type) {
 	}
 	
 	let text = "";
-	syllables = pronunciation[0].split("-");
-	for (let i = 0; i < syllables.length; i++) {
+	for (let i = 0; i < pronunciation.length; i++) {
 		if (i > 0) {
-			text += "-";
+			text += " or ";
 		}
-		if (syllables.length > 1 && i + 1 === pronunciation[1]) {
-			text += "__" + syllables[i] + "__";
-		} else {
-			text += syllables[i];
+		syllables = pronunciation[i]['syllables'].split("-");
+		for (let j = 0; j < syllables.length; j++) {
+			if (j > 0) {
+				text += "-";
+			}
+			if (syllables.length > 1 && j + 1 === pronunciation[i]['stressed']) {
+				text += "__" + syllables[j] + "__";
+			} else {
+				text += syllables[j];
+			}
 		}
-	}
-	if (type === "n:si" || type === "nv:si") {
-		text += " si";
+		if (type === "n:si" || type === "nv:si") {
+			text += " si";
+		}
+
+		if (pronunciation.hasOwnProperty('audio')) {
+			const audios = pronunciation['audio'];
+			for (let audio of audios) {
+				text += " [▸](https://reykunyu.wimiso.nl/fam/" + audio["file"] + ")";
+			}
+		}
 	}
 	
 	return text;
@@ -202,7 +220,7 @@ function conjugation(conjugation, short) {
 		}
 		
 		if (text !== "") {
-			text += short ? '; ' : '  ';
+			text += short ? '; ' : '\n>    ';
 		}
 
 		switch (type) {
@@ -217,6 +235,12 @@ function conjugation(conjugation, short) {
 				break;
 			case "v_to_n":
 				text += verbToNounConjugation(c, short);
+				break;
+			case "v_to_adj":
+				text += verbToAdjectiveConjugation(c, short);
+				break;
+			case "adj_to_adv":
+				text += adjectiveToAdverbConjugation(c, short);
 				break;
 		}
 	}
@@ -300,7 +324,39 @@ function verbToNounConjugation(conjugation, short) {
 	text += conjugation["affixes"][0];
 	
 	if (!short) {
-		text += "  =  ";
+		text += "  =  *(n.)* ";
+		text += conjugation["result"];
+	}
+	
+	return text;
+}
+
+function verbToAdjectiveConjugation(conjugation, short) {
+	let text = short ? '< ' : '→  ';
+	
+	text += conjugation["root"];
+	
+	text += " + ";
+	text += conjugation["affixes"][0];
+	
+	if (!short) {
+		text += "  =  *(adj.)* ";
+		text += conjugation["result"];
+	}
+	
+	return text;
+}
+
+function adjectiveToAdverbConjugation(conjugation, short) {
+	let text = short ? '< ' : '→  ';
+	
+	text += conjugation["root"];
+	
+	text += " + ";
+	text += conjugation["affixes"][0];
+	
+	if (!short) {
+		text += "  =  *(adv.)* ";
 		text += conjugation["result"];
 	}
 	
@@ -388,12 +444,45 @@ function getShortTranslation(language, result) {
 	translation = translation.split(' | ')[0];
 	translation = translation.split(' (')[0];
 
+	if (translation.startsWith('(') && translation.endsWith(')')) {
+		translation = translation.substring(1, translation.length - 1);
+	}
+
 	if (result["type"][0] === "v"
 		&& translation.indexOf("to ") === 0) {
 		translation = translation.substr(3);
 	}
 
 	return translation;
+}
+
+function statusSection(status, statusNote) {
+	if (status === "") {
+		return "";
+	}
+	status = status[0].toUpperCase() + status.slice(1);
+	return "> " + status + " word: " + statusNote + "\n";
+}
+
+function sourceSection(sources) {
+	let sourceText = "";
+	for (let source of sources) {
+		if (sourceText.length) {
+			sourceText += "  |  ";
+		}
+		if (source.length == 1) {
+			sourceText += source[0];
+		} else {
+			sourceText += utils.markdownLink(source[0], source[1]);
+		}
+		if (source.length >= 3 && source[2]) {
+			sourceText += " (" + source[2] + ")";
+		}
+		if (source.length >= 4 && source[3]) {
+			sourceText += " [" + source[3] + "]";
+		}
+	}
+	return "> Source: " + sourceText + "\n";
 }
 
 // currently unused

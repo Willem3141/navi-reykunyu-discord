@@ -29,7 +29,7 @@ async function search(query, language) {
 		text += '> ' + turndownService.turndown(response[i]).replace(/\n/g, '\n> ');
 	}
 
-	text += '\n*(source: An Annotated Na\'vi Dictionary by Plumps, 2021-05-09)*';
+	text += '\n*(source: An Annotated Na\'vi Dictionary by Plumps, 2022-07-03)*';
 	return text;
 };
 
