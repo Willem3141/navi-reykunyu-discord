@@ -215,7 +215,9 @@ function conjugation(conjugation, short) {
 	for (let i = 0; i < conjugation.length; i++) {
 		let type = conjugation[i]["type"];
 		let c = conjugation[i]["conjugation"];
-		if (c["result"].toLowerCase() == c["root"].toLowerCase()) {
+		if (c["result"].length == 1
+				&& c["result"][0].toLowerCase() == c["root"].toLowerCase()
+				&& !c.hasOwnProperty("correction")) {
 			continue;
 		}
 		
@@ -269,7 +271,12 @@ function nounConjugation(conjugation, short) {
 	
 	if (!short) {
 		text += "  =  ";
-		text += conjugation["result"];
+		if (conjugation["correction"]) {
+			text += ":warning: ~~" + conjugation["correction"] + "~~ ";
+		}
+		text += conjugation["result"].join(" / ");
+	} else if (conjugation["correction"]) {
+		text += " :warning:";
 	}
 	
 	return text;
@@ -288,7 +295,12 @@ function verbConjugation(conjugation, short) {
 	
 	if (!short) {
 		text += "  =  ";
-		text += conjugation["result"];
+		if (conjugation["correction"]) {
+			text += ":warning: ~~" + conjugation["correction"] + "~~ ";
+		}
+		text += conjugation["result"].join(" / ");
+	} else if (conjugation["correction"]) {
+		text += " :warning:";
 	}
 
 	return text;
@@ -309,7 +321,12 @@ function adjectiveConjugation(conjugation, short) {
 	
 	if (!short) {
 		text += "  =  ";
-		text += conjugation["result"];
+		if (conjugation["correction"]) {
+			text += ":warning: ~~" + conjugation["correction"] + "~~ ";
+		}
+		text += conjugation["result"].join(" / ");
+	} else if (conjugation["correction"]) {
+		text += " :warning:";
 	}
 
 	return text;
@@ -325,7 +342,12 @@ function verbToNounConjugation(conjugation, short) {
 	
 	if (!short) {
 		text += "  =  *(n.)* ";
-		text += conjugation["result"];
+		if (conjugation["correction"]) {
+			text += ":warning: ~~" + conjugation["correction"] + "~~ ";
+		}
+		text += conjugation["result"].join(" / ");
+	} else if (conjugation["correction"]) {
+		text += " :warning:";
 	}
 	
 	return text;
@@ -341,7 +363,12 @@ function verbToAdjectiveConjugation(conjugation, short) {
 	
 	if (!short) {
 		text += "  =  *(adj.)* ";
-		text += conjugation["result"];
+		if (conjugation["correction"]) {
+			text += ":warning: ~~" + conjugation["correction"] + "~~ ";
+		}
+		text += conjugation["result"].join(" / ");
+	} else if (conjugation["correction"]) {
+		text += " :warning:";
 	}
 	
 	return text;
@@ -357,7 +384,12 @@ function adjectiveToAdverbConjugation(conjugation, short) {
 	
 	if (!short) {
 		text += "  =  *(adv.)* ";
-		text += conjugation["result"];
+		if (conjugation["correction"]) {
+			text += ":warning: ~~" + conjugation["correction"] + "~~ ";
+		}
+		text += conjugation["result"].join(" / ");
+	} else if (conjugation["correction"]) {
+		text += " :warning:";
 	}
 	
 	return text;
