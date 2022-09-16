@@ -61,9 +61,11 @@ function getSingleWordResult(result, suggestions, language) {
 		text += ')';
 
 		if (r["status"]) {
-			text += '  :warning: ' + r["status"];
+			text += '  [:warning: ' + r["status"] + ']';
 		}
-		
+
+		text += '  ' + getAllTranslations(language, r['translations']);
+
 		text += '\n';
 
 		if (r.hasOwnProperty("conjugated")) {
@@ -72,10 +74,6 @@ function getSingleWordResult(result, suggestions, language) {
 				text += '> [ ' + explanation + ' ]\n';
 			}
 		}
-
-		text += '> **';
-		text += getTranslation(language, r['translations'][0]);
-		text += '**\n';
 
 		if (r['etymology'] || r['meaning_note']) {
 			text += etymologyAndNoteSection(language,
@@ -119,6 +117,21 @@ function getSingleWordResult(result, suggestions, language) {
 		}
 	}
 
+	return text;
+}
+
+function getAllTranslations(language, translations) {
+	let text = '';
+	if (translations.length > 1) {
+		for (let i = 0; i < translations.length; i++) {
+			if (i > 0) {
+				text += ' ';
+			}
+			text += '**' + (i + 1) + '.** ' + getTranslation(language, translations[i]);
+		}
+	} else {
+		text += getTranslation(language, translations[0]);
+	}
 	return text;
 }
 
@@ -241,6 +254,9 @@ function conjugation(conjugation, short) {
 			case "v_to_adj":
 				text += verbToAdjectiveConjugation(c, short);
 				break;
+			case "v_to_part":
+				text += verbToParticipleConjugation(c, short);
+				break;
 			case "adj_to_adv":
 				text += adjectiveToAdverbConjugation(c, short);
 				break;
@@ -356,10 +372,10 @@ function verbToNounConjugation(conjugation, short) {
 function verbToAdjectiveConjugation(conjugation, short) {
 	let text = short ? '< ' : '→  ';
 	
-	text += conjugation["root"];
-	
-	text += " + ";
 	text += conjugation["affixes"][0];
+	text += " + ";
+
+	text += conjugation["root"];
 	
 	if (!short) {
 		text += "  =  *(adj.)* ";
@@ -369,6 +385,22 @@ function verbToAdjectiveConjugation(conjugation, short) {
 		text += conjugation["result"].join(" / ");
 	} else if (conjugation["correction"]) {
 		text += " :warning:";
+	}
+	
+	return text;
+}
+
+function verbToParticipleConjugation(conjugation, short) {
+	let text = short ? '< ' : '→  ';
+	
+	text += conjugation["root"];
+	
+	text += " + ";
+	text += "‹" + conjugation["affixes"][0] + "›";
+	
+	if (!short) {
+		text += "  =  *(adj.)* ";
+		text += conjugation["result"].join(" / ");
 	}
 	
 	return text;
@@ -614,7 +646,7 @@ function getSentenceResult(results, language) {
 
 			text += singleLineResultMarkdown(r, language);
 
-			text += getTranslation(language, r['translations'][0]);
+			text += getAllTranslations(language, r['translations']);
 		}
 	}
 

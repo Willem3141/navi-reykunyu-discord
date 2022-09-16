@@ -40,7 +40,7 @@ async function search(query, language) {
 
 		text += singleLineResultMarkdown(r, language);
 		
-		text += r['translations'][0][language]
+		text += getAllTranslations(language, r['translations'])
 			.replace(new RegExp('(' + escapeRegex(query) + ')', 'ig'), '__$1__');
 	}
 
@@ -105,6 +105,21 @@ function singleLineResultMarkdown(r, language) {
 		text += '  :warning:  ';
 	}
 
+	return text;
+}
+
+function getAllTranslations(language, translations) {
+	let text = '';
+	if (translations.length > 1) {
+		for (let i = 0; i < translations.length; i++) {
+			if (i > 0) {
+				text += ' ';
+			}
+			text += '**' + (i + 1) + '.** ' + getTranslation(language, translations[i]);
+		}
+	} else {
+		text += getTranslation(language, translations[0]);
+	}
 	return text;
 }
 
