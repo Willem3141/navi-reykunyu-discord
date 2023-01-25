@@ -1,4 +1,5 @@
 const fetch = require('node-fetch');
+const { EmbedBuilder } = require('discord.js');
 
 const nouns = require('../nouns');
 const utils = require('../utils');
@@ -10,7 +11,7 @@ module.exports = {
 	getTranslation: getTranslation
 };
 
-async function search(query, language) {
+async function search(query, language, ipa, detailed) {
 	let response;
 	try {
 		response = await fetch('https://reykunyu.wimiso.nl/api/fwew?tìpawm=' + encodeURIComponent(query))
@@ -22,13 +23,13 @@ async function search(query, language) {
 	if (response.length === 0) {
 		return '';
 	} else if (response.length === 1) {
-		return getSingleWordResult(response[0]['sì\'eyng'], response[0]['aysämok'], language);
+		return getSingleWordResult(response[0]['sì\'eyng'], response[0]['aysämok'], language, ipa, detailed);
 	} else {
 		return getSentenceResult(response, language);
 	}
 };
 
-function getSingleWordResult(result, suggestions, language) {
+function getSingleWordResult(result, suggestions, language, ipa, detailed) {
 
 	if (result.length === 0) {
 		if (suggestions.length) {
@@ -43,7 +44,7 @@ function getSingleWordResult(result, suggestions, language) {
 
 	for (let i = 0; i < result.length; i++) {
 		if (i > 0) {
-			text += "\n";
+			text += "\n\n";
 		}
 
 		let r = result[i];
@@ -51,9 +52,12 @@ function getSingleWordResult(result, suggestions, language) {
 		text += createWordLink(language, r, true);
 		text += '**';
 
-		text += '  (' + toReadableType(r["type"]);
-		text += ', ';
-		text += pronunciationToMarkdown(r["pronunciation"], r["type"]);
+		text += '  (';
+		if (ipa) {
+			text += ipaToMarkdown(r["pronunciation"], r["type"]);
+		} else {
+			text += pronunciationToMarkdown(r["pronunciation"], r["type"]);
+		}
 		if (r['infixes']) {
 			text += ', inf. ';
 			text += r['infixes'].replace(/\./g, '·');
@@ -64,46 +68,48 @@ function getSingleWordResult(result, suggestions, language) {
 			text += '  [:warning: ' + r["status"] + ']';
 		}
 
-		text += '  ' + getAllTranslations(language, r['translations']);
+		text += '\n' + toReadableType(r["type"]) + ' ' + getAllTranslations(language, r['translations']);
 
-		text += '\n';
-
-		if (r.hasOwnProperty("conjugated")) {
+		/*if (r.hasOwnProperty("conjugated")) {
 			let explanation = conjugation(r["conjugated"]);
 			if (explanation) {
-				text += '> [ ' + explanation + ' ]\n';
+				text += '\n' + explanation + '\n';
 			}
-		}
-
-		if (r['etymology'] || r['meaning_note']) {
-			text += etymologyAndNoteSection(language,
-					r["etymology"], r["meaning_note"]);
-		}
-		if (r['derived']) {
-			text += derivedSection(language, r["derived"]);
-		}
-		if (r["status_note"]) {
-			text += statusSection(r["status"], r["status_note"]);
-		}
-		if (r["source"] && r["source"].length > 0 && r["source"][0].length > 0) {
-			text += sourceSection(r["source"]);
-		}
-
-		/*if (r["affixes"] && r["affixes"].length) {
-			text += affixesSection(language, r["affixes"]);
 		}*/
-		
-		/*
-		if (r["conjugation"]) {
-			text += nounConjugationSection(r["conjugation"]["forms"], r["conjugation_note"]);
-		} else if (r["type"] === "n") {
-			text += nounConjugationSection(createNounConjugation(r["na'vi"], r["type"], false), r["conjugation_note"]);
-		} else if (r["type"] === "n:pr") {
-			text += nounConjugationSection(createNounConjugation(r["na'vi"], r["type"], true), r["conjugation_note"]);
-		//} else if (r["type"] === "adj") {
-		//	$result.append(adjectiveConjugationSection(r["na'vi"], r["type"], r["conjugation_note"]));
+
+		if (r["affixes"] && r["affixes"].length) {
+			text += '\n' + affixesSection(language, r["affixes"]);
 		}
-		*/
+
+		if (detailed) {
+			text += '\n';
+
+			if (r['etymology'] || r['meaning_note']) {
+				text += etymologyAndNoteSection(language,
+						r["etymology"], r["meaning_note"]);
+			}
+			if (r['derived']) {
+				text += derivedSection(language, r["derived"]);
+			}
+			if (r["status_note"]) {
+				text += statusSection(r["status"], r["status_note"]);
+			}
+			if (r["source"] && r["source"].length > 0 && r["source"][0].length > 0) {
+				text += sourceSection(r["source"]);
+			}
+			
+			/*
+			if (r["conjugation"]) {
+				text += nounConjugationSection(r["conjugation"]["forms"], r["conjugation_note"]);
+			} else if (r["type"] === "n") {
+				text += nounConjugationSection(createNounConjugation(r["na'vi"], r["type"], false), r["conjugation_note"]);
+			} else if (r["type"] === "n:pr") {
+				text += nounConjugationSection(createNounConjugation(r["na'vi"], r["type"], true), r["conjugation_note"]);
+			//} else if (r["type"] === "adj") {
+			//	$result.append(adjectiveConjugationSection(r["na'vi"], r["type"], r["conjugation_note"]));
+			}
+			*/
+		}
 	}
 
 	let options = {};
@@ -174,7 +180,7 @@ function toReadableType(type) {
 		"v:in": "vin.",
 		"v:tr": "vtr.",
 		"v:m": "vm.",
-		"v:si": "v.",
+		"v:si": "vin.",
 		"v:cp": "vcp.",
 		"phr": "phr.",
 		"inter": "inter.",
@@ -211,14 +217,46 @@ function pronunciationToMarkdown(pronunciation, type) {
 			text += " si";
 		}
 
-		if (pronunciation.hasOwnProperty('audio')) {
-			const audios = pronunciation['audio'];
-			for (let audio of audios) {
-				text += " [▸](https://reykunyu.wimiso.nl/fam/" + audio["file"] + ")";
-			}
+		text += audioLinks(pronunciation[i]);
+	}
+	
+	return text;
+}
+
+function ipaToMarkdown(pronunciation, type) {
+	if (!pronunciation || pronunciation.length === 0) {
+		return "unknown stress";
+	}
+	
+	let text = "";
+	for (let i = 0; i < pronunciation.length; i++) {
+		if (i > 0) {
+			text += " or ";
+		}
+		const fnIpa = pronunciation[i]['ipa']['FN'];
+		const rnIpa = pronunciation[i]['ipa']['RN'];
+		if (fnIpa === rnIpa) {
+			text += 'FN/RN ' + fnIpa;
+			text += audioLinks(pronunciation[i]);
+		} else {
+			text += 'FN ' + fnIpa;
+			text += audioLinks(pronunciation[i]);
+			text += ' / ';
+			text += 'RN ' + rnIpa;
 		}
 	}
 	
+	return text;
+}
+
+function audioLinks(pronunciation) {
+	let text = '';
+	if (pronunciation.hasOwnProperty('audio')) {
+		const audios = pronunciation['audio'];
+		for (let audio of audios) {
+			text += " [▸](https://reykunyu.wimiso.nl/fam/" + audio["file"] + ")";
+		}
+	}
 	return text;
 }
 
@@ -436,7 +474,7 @@ function affixesSection(language, affixes) {
 		const affix = a['affix'];
 		text += createWordLink(language, affix);
 	}
-	return "> Affixes: " + text;
+	return "Affixes: " + text;
 }
 
 function etymologyAndNoteSection(language, etymology, note) {

@@ -19,14 +19,22 @@ module.exports = {
 				.setDescription('The word or sentence to search for')
 				.setRequired(true))
 		.addBooleanOption(option =>
+				option.setName('ipa')
+				.setDescription('If True, then Reykunyu will show the pronunciation of words using IPA'))
+		.addBooleanOption(option =>
+				option.setName('detailed')
+				.setDescription('If True, then Reykunyu will include detailed information, such as etymology and sources.'))
+		.addBooleanOption(option =>
 				option.setName('private')
 				.setDescription('If True, then Reykunyu will show the results only to you rather than publicly')),
 
 	execute: async function (interaction) {
 		const query = interaction.options.getString('input');
 		const language = utils.getLanguage(interaction);
+		const ipa = interaction.options.getBoolean('ipa');
+		const detailed = interaction.options.getBoolean('detailed');
 		let mode = 'navi';
-		let reply = await naviSearcher.search(query, language);
+		let reply = await naviSearcher.search(query, language, ipa, detailed);
 		if (reply.startsWith('No results')) {
 			englishReply = await englishSearcher.search(query, language);
 			if (!englishReply.startsWith('No results')) {
