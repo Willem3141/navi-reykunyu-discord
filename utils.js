@@ -34,11 +34,11 @@ function getLanguage(interaction) {
 
 function getLanguageName(code) {
 	if (code === 'de') {
-		return 'German';
+		return 'Deutsch';
 	} else if (code === 'fr') {
-		return 'French';
+		return 'Français';
 	} else if (code === 'nl') {
-		return 'Dutch';
+		return 'Nederlands';
 	} else if (code === 'x-navi') {
 		return 'Na’vi';
 	}
