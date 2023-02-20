@@ -1,4 +1,4 @@
-const { MessageActionRow, MessageSelectMenu } = require('discord.js');
+const { MessageActionRow, MessageEmbed, MessageSelectMenu } = require('discord.js');
 
 const fetch = require('node-fetch');
 
@@ -26,13 +26,23 @@ module.exports = {
 			} else if (value === 'annotated') {
 				content = await annotatedSearcher.search(query, language);
 			}
-			if (content.startsWith('No results')) {
-				content = `**${query}**: ${content}`;
+			if (typeof content === 'string' && content.startsWith('No results')) {
+				content = [new MessageEmbed()
+					.setColor(0xE9359B)
+					.setDescription(`**${query}**: ${content}`)];
 			}
-			interaction.update({
-				'content': utils.truncate(content),
-				'components': [buttonRow]
-			});
+			if (typeof content === 'string') {
+				interaction.update({
+					'content': utils.truncate(content),
+					'embeds': [],
+					'components': [buttonRow]
+				});
+			} else {
+				interaction.update({
+					'embeds': content,
+					'components': [buttonRow]
+				});
+			}
 			return;
 		}
 

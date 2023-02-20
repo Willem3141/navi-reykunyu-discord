@@ -1,5 +1,5 @@
 const fetch = require('node-fetch');
-const { EmbedBuilder } = require('discord.js');
+const { MessageEmbed } = require('discord.js');
 
 const nouns = require('../nouns');
 const utils = require('../utils');
@@ -40,12 +40,10 @@ function getSingleWordResult(result, suggestions, language, ipa, detailed) {
 		return 'No results found for Na\'vi → English.';
 	}
 
-	text = '';
+	let embeds = [];
 
 	for (let i = 0; i < result.length; i++) {
-		if (i > 0) {
-			text += "\n\n";
-		}
+		let text = '';
 
 		let r = result[i];
 		text += '**'
@@ -69,6 +67,10 @@ function getSingleWordResult(result, suggestions, language, ipa, detailed) {
 		}
 
 		text += '\n' + toReadableType(r["type"]) + ' ' + getAllTranslations(language, r['translations']);
+		if (r["meaning_note"]) {
+			text += '\n';
+			text += noteSection(language, r["meaning_note"]);
+		}
 
 		/*if (r.hasOwnProperty("conjugated")) {
 			let explanation = conjugation(r["conjugated"]);
@@ -81,49 +83,35 @@ function getSingleWordResult(result, suggestions, language, ipa, detailed) {
 			text += '\n' + affixesSection(language, r["affixes"]);
 		}
 
+		const embed = new MessageEmbed()
+			.setColor(0x359BE9);
+
 		if (detailed) {
 			text += '\n';
 
-			if (r['etymology'] || r['meaning_note']) {
-				text += etymologyAndNoteSection(language,
-						r["etymology"], r["meaning_note"]);
+			if (r['etymology']) {
+				embed.addField('Etymology', etymologySection(language, r['etymology']));
 			}
 			if (r['derived']) {
-				text += derivedSection(language, r["derived"]);
+				embed.addField('Derivations', derivedSection(language, r["derived"]));
 			}
 			if (r["status_note"]) {
 				text += statusSection(r["status"], r["status_note"]);
 			}
 			if (r["source"] && r["source"].length > 0 && r["source"][0].length > 0) {
-				text += sourceSection(r["source"]);
+				//text += sourceSection(r["source"]);
+				embed.addField('Source', sourceSection(r['source']));
 			}
-			
-			/*
-			if (r["conjugation"]) {
-				text += nounConjugationSection(r["conjugation"]["forms"], r["conjugation_note"]);
-			} else if (r["type"] === "n") {
-				text += nounConjugationSection(createNounConjugation(r["na'vi"], r["type"], false), r["conjugation_note"]);
-			} else if (r["type"] === "n:pr") {
-				text += nounConjugationSection(createNounConjugation(r["na'vi"], r["type"], true), r["conjugation_note"]);
-			//} else if (r["type"] === "adj") {
-			//	$result.append(adjectiveConjugationSection(r["na'vi"], r["type"], r["conjugation_note"]));
-			}
-			*/
 		}
-	}
-
-	let options = {};
-
-	for (let i = 0; i < result.length; i++) {
-		let r = result[i];
 		if (r['image']) {
-			options['file'] = 'https://reykunyu.wimiso.nl/ayrel/' + r['image'];
-			text += `\n[${r["na'vi"]} drawn by Eana Unil](https://reykunyu.wimiso.nl/ayrel/${r['image']})`;
-			break;
+			embed.setImage('https://reykunyu.wimiso.nl/ayrel/' + r['image'])
+				.setFooter({'text': r["na'vi"] + ' drawn by Eana Unil'});
 		}
+		embed.setDescription(text);
+		embeds.push(embed);
 	}
 
-	return text;
+	return embeds;
 }
 
 function getAllTranslations(language, translations) {
@@ -164,7 +152,7 @@ function toReadableType(type) {
 	const mapping = {
 		"n": "n.",
 		"n:unc": "n.",
-		"n:si": "v.",
+		"n:si": "vin.",
 		"n:pr": "prop. n.",
 		"pn": "pn.",
 		"adj": "adj.",
@@ -473,19 +461,32 @@ function affixesSection(language, affixes) {
 		}
 		const affix = a['affix'];
 		text += createWordLink(language, affix);
+
+		if (a.hasOwnProperty('combinedFrom')) {
+			let parts = '';
+			for (let b of a['combinedFrom']) {
+				if (parts) {
+					parts += ' + ';
+				}
+				const part = b['affix'];
+				parts += createWordLink(language, part);
+			}
+			text += ' = ' + parts;
+		}
 	}
 	return "Affixes: " + text;
 }
 
-function etymologyAndNoteSection(language, etymology, note) {
+function etymologySection(language, etymology) {
 	let text = [];
-	if (etymology) {
-		text.push(linkStringToMarkdown(language, etymology));
-	}
-	if (note) {
-		text.push(linkStringToMarkdown(language, note));
-	}
-	return "> " + text.join(" ") + "\n";
+	text.push(linkStringToMarkdown(language, etymology));
+	return text.join(" ");
+}
+
+function noteSection(language, note) {
+	let text = [];
+	text.push(linkStringToMarkdown(language, note));
+	return text.join(" ");
 }
 
 function derivedSection(language, derived) {
@@ -501,7 +502,7 @@ function derivedSection(language, derived) {
 		const word = derived[i];
 		text += createWordLink(language, word);
 	}
-	return "> Derivations: " + text + "\n";
+	return text;
 }
 
 function linkStringToMarkdown(language, linkString) {
@@ -584,7 +585,7 @@ function sourceSection(sources) {
 			sourceText += " [" + source[3] + "]";
 		}
 	}
-	return "> Source: " + sourceText + "\n";
+	return sourceText;
 }
 
 // currently unused
@@ -655,6 +656,8 @@ function nounConjugationString(c) {
 
 function getSentenceResult(results, language) {
 
+	const embed = new MessageEmbed()
+		.setColor(0x359BE9);
 	text = '';
 
 	for (let i = 0; i < results.length; i++) {
@@ -662,7 +665,7 @@ function getSentenceResult(results, language) {
 			text += '\n';
 		}
 		if (i >= 9 && results.length > 10) {
-			text += '(' + (results.length - 9) + ' more words omitted)';
+			embed.setFooter({'text': '(' + (results.length - 9) + ' more words omitted)'});
 			break;
 		}
 
@@ -687,8 +690,9 @@ function getSentenceResult(results, language) {
 			text += getAllTranslations(language, r['translations']);
 		}
 	}
+	embed.setDescription(text);
 
-	return text;
+	return [embed];
 }
 
 function singleLineResultMarkdown(r, language) {
@@ -723,7 +727,6 @@ function getTranslation(language, translation) {
 }
 
 function lemmaForm(word, type) {
-	console.log('lemma form of', word, type);
 	if (type === "n:si" || type === "nv:si") {
 		return word + ' si';
 	} else if (type === 'aff:pre') {

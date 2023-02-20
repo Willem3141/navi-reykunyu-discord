@@ -1,4 +1,5 @@
 const fetch = require('node-fetch');
+const { MessageEmbed } = require('discord.js');
 
 const nouns = require('../nouns');
 const utils = require('../utils');
@@ -16,6 +17,8 @@ async function search(query, language) {
 		return 'Something went wrong while searching. This shouldn\'t happen, so let me ping <@163315929760006144> to get the issue fixed.';
 	}
 
+	const embed = new MessageEmbed()
+		.setColor(0x359BE9);
 	let text = '';
 
 	if (response.length === 0) {
@@ -29,7 +32,7 @@ async function search(query, language) {
 			text += '\n';
 		}
 		if (i >= 9 && response.length > 10) {
-			text += '(' + (response.length - 10) + ' more results omitted)';
+			embed.setFooter({'text': '(' + (response.length - 10) + ' more results omitted)'});
 			break;
 		}
 
@@ -43,8 +46,9 @@ async function search(query, language) {
 		text += getAllTranslations(language, r['translations'])
 			.replace(new RegExp('(' + escapeRegex(query) + ')', 'ig'), '__$1__');
 	}
+	embed.setDescription(text);
 
-	return text;
+	return [embed];
 };
 
 function toReadableType(type) {

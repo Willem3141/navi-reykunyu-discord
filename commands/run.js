@@ -1,4 +1,4 @@
-const { MessageActionRow, MessageButton, MessageSelectMenu } = require('discord.js');
+const { MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu } = require('discord.js');
 const { SlashCommandBuilder } = require('@discordjs/builders');
 
 const fetch = require('node-fetch');
@@ -35,21 +35,31 @@ module.exports = {
 		const detailed = interaction.options.getBoolean('detailed');
 		let mode = 'navi';
 		let reply = await naviSearcher.search(query, language, ipa, detailed);
-		if (reply.startsWith('No results')) {
+		if (typeof reply === 'string' && reply.startsWith('No results')) {
 			englishReply = await englishSearcher.search(query, language);
-			if (!englishReply.startsWith('No results')) {
+			if (typeof englishReply !== 'string' || !englishReply.startsWith('No results')) {
 				mode = 'english';
 				reply = englishReply;
 			} else {
-				reply = `**${query}**: ${reply}`;
+				reply = [new MessageEmbed()
+					.setColor(0xE9359B)
+					.setDescription(`**${query}**: ${reply}`)];
 			}
 		}
 		const buttonRow = utils.createButtonRow(query, language, mode);
-		await interaction.reply({
-			'content': utils.truncate(reply),
-			'components': [buttonRow],
-			'ephemeral': interaction.options.getBoolean('private')
-		});
+		if (typeof reply === 'string') {
+			await interaction.reply({
+				'content': utils.truncate(reply),
+				'components': [buttonRow],
+				'ephemeral': interaction.options.getBoolean('private')
+			});
+		} else {
+			await interaction.reply({
+				'embeds': reply,
+				'components': [buttonRow],
+				'ephemeral': interaction.options.getBoolean('private')
+			});
+		}
 	}
 };
 

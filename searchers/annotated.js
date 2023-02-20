@@ -1,7 +1,8 @@
 const fetch = require('node-fetch');
+const { MessageEmbed } = require('discord.js');
 
 const TurndownService = require('turndown');
-const turndownService = new TurndownService({strongDelimiter: '`'});
+const turndownService = new TurndownService({strongDelimiter: '**'});
 
 module.exports = {
 	search: search
@@ -20,16 +21,17 @@ async function search(query, language) {
 		return 'No results found in the Annotated Dictionary.';
 	}
 
-	text = '';
+	let embeds = [];
 
 	for (let i = 0; i < response.length; i++) {
-		if (i > 0) {
-			text += "\n\n";
-		}
-		text += '> ' + turndownService.turndown(response[i]).replace(/\n/g, '\n> ');
+		text = turndownService.turndown(response[i]);
+		const embed = new MessageEmbed()
+			.setColor(0x359BE9)
+			.setDescription(text)
+			.setFooter({'text': 'source: An Annotated Na\'vi Dictionary by Plumps, 2022-07-03'});
+		embeds.push(embed);
 	}
 
-	text += '\n*(source: An Annotated Na\'vi Dictionary by Plumps, 2022-07-03)*';
-	return text;
+	return embeds;
 };
 
