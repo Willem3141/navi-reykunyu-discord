@@ -46,23 +46,30 @@ module.exports = {
 		}
 		let word = result[0];
 
-		if (!word.hasOwnProperty('pronunciation') || word['pronunciation'].length < 3) {
+		if (!word.hasOwnProperty('pronunciation') || word['pronunciation'].length === 0) {
+			await interaction.reply({
+				'content': 'Unfortunately, I don\'t know the pronunciation for **' + word['na\'vi'] + '**.',
+				'ephemeral': true
+			});
+			return;
+		}
+		const pronunciation = word['pronunciation'][0];
+		if (!pronunciation.hasOwnProperty('audio')) {
 			await interaction.reply({
 				'content': 'Unfortunately, I don\'t have audio clips for **' + word['na\'vi'] + '**.',
 				'ephemeral': true
 			});
 			return;
 		}
-		const pronunciation = word['pronunciation'][2];
-
+		const audio = pronunciation['audio'];
 		let text = 'Pronunciation of **' + word['na\'vi'] + '**';
-		const index = Math.floor(Math.random() * pronunciation.length);
-		const audio = pronunciation[index];
+		const index = Math.floor(Math.random() * audio.length);
+		const clip = audio[index];
 		files = [{
-			'attachment': '../navi-reykunyu/fam/' + audio['file'],
+			'attachment': '../navi-reykunyu/fam/' + clip['file'],
 			'name': 'sound.mp3'
 		}];
-		text += ' (by ' + audio['speaker'] + '):';
+		text += ' (by ' + clip['speaker'] + '):';
 
 		await interaction.reply({
 			'content': text,
