@@ -44,7 +44,7 @@ module.exports = {
 			tooMany = true;
 		}
 		let type = interaction.options.getString('type');
-		const response = await fetch('https://reykunyu.wimiso.nl/api/random?holpxay=' + number + '&fnel=' + type)
+		const response = await fetch('https://reykunyu.lu/api/random?holpxay=' + number + '&fnel=' + type)
 			.then(response => response.json())
 			.catch(async function (error) {
 				await interaction.reply({

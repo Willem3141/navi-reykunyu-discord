@@ -60,7 +60,7 @@ module.exports = {
 		
 		let parseResults;
 		try {
-			parseResults = await fetch('https://reykunyu.wimiso.nl/api/parse?tìpawm=' + query)
+			parseResults = await fetch('https://reykunyu.lu/api/parse?tìpawm=' + query)
 				.then(response => response.json());
 		} catch (e) {
 			await interaction.reply({

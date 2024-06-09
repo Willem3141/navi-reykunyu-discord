@@ -27,7 +27,7 @@ module.exports = {
 		const language = utils.getLanguage(interaction);
 		let response;
 		try {
-			response = await fetch('https://reykunyu.wimiso.nl/api/fwew?tìpawm=' + encodeURIComponent(query))
+			response = await fetch('https://reykunyu.lu/api/fwew?tìpawm=' + encodeURIComponent(query))
 				.then(response => response.json());
 		} catch (e) {
 			await interaction.reply({

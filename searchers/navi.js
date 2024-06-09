@@ -15,7 +15,7 @@ module.exports = {
 async function search(query, language, ipa, detailed) {
 	let response;
 	try {
-		response = await fetch('https://reykunyu.wimiso.nl/api/fwew?tìpawm=' + encodeURIComponent(query))
+		response = await fetch('https://reykunyu.lu/api/fwew?tìpawm=' + encodeURIComponent(query))
 			.then(response => response.json());
 	} catch (e) {
 		return _('error-search', language);
@@ -110,7 +110,7 @@ function getSingleWordResult(result, suggestions, language, ipa, detailed) {
 			}
 		}
 		if (r['image']) {
-			embed.setImage('https://reykunyu.wimiso.nl/ayrel/' + r['image'])
+			embed.setImage('https://reykunyu.lu/ayrel/' + r['image'])
 				.setFooter({'text': r["na'vi"] + ' ' + _('image-drawn-by', language) + ' Eana Unil'});
 		}
 		embed.setDescription(text);
@@ -248,7 +248,7 @@ function audioLinks(pronunciation) {
 	if (pronunciation.hasOwnProperty('audio')) {
 		const audios = pronunciation['audio'];
 		for (let audio of audios) {
-			text += " [▸](https://reykunyu.wimiso.nl/fam/" + audio["file"] + ")";
+			text += " [▸](https://reykunyu.lu/fam/" + audio["file"] + ")";
 		}
 	}
 	return text;
@@ -544,7 +544,7 @@ function linkStringToMarkdown(language, linkString) {
 }
 
 function createBareLink(word) {
-	let url = "https://reykunyu.wimiso.nl/?q=" + word;
+	let url = "https://reykunyu.lu/?q=" + word;
 	return utils.markdownLink(word, url);
 }
 
@@ -552,7 +552,7 @@ function createWordLink(language, link, hideTranslation) {
 	if (typeof link === "string") {
 		return link;
 	} else {
-		let url = "https://reykunyu.wimiso.nl/?q=" + link["na'vi"];
+		let url = "https://reykunyu.lu/?q=" + link["na'vi"];
 		let lemma = lemmaForm(link["na'vi"], link["type"]);
 		let result = utils.markdownLink(lemma, url);
 		if (!hideTranslation) {

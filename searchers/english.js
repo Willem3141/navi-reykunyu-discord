@@ -11,7 +11,7 @@ module.exports = {
 async function search(query, language) {
 	let response;
 	try {
-		response = await fetch('https://reykunyu.wimiso.nl/api/search?language=' + language + '&query=' + encodeURIComponent(query))
+		response = await fetch('https://reykunyu.lu/api/search?language=' + language + '&query=' + encodeURIComponent(query))
 			.then(response => response.json());
 	} catch (e) {
 		return 'Something went wrong while searching. This shouldn\'t happen, so let me ping <@163315929760006144> to get the issue fixed.';
@@ -92,7 +92,7 @@ function createWordLink(link) {
 	if (typeof link === "string") {
 		return link;
 	} else {
-		let url = "https://reykunyu.wimiso.nl/?q=" + link["na'vi"];
+		let url = "https://reykunyu.lu/?q=" + link["na'vi"];
 		let lemma = lemmaForm(link["na'vi"], link["type"]);
 		return utils.markdownLink(lemma, url);
 	}

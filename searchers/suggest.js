@@ -12,7 +12,7 @@ module.exports = {
 async function search(query, language, ipa, detailed) {
 	let response;
 	try {
-		response = await fetch('https://reykunyu.wimiso.nl/api/mok?tìpawm=' + encodeURIComponent(query))
+		response = await fetch('https://reykunyu.lu/api/mok?tìpawm=' + encodeURIComponent(query))
 			.then(response => response.json());
 	} catch (e) {
 		return [];
