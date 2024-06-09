@@ -15,7 +15,7 @@ module.exports = {
 async function search(query, language, ipa, detailed) {
 	let response;
 	try {
-		response = await fetch('https://reykunyu.lu/api/fwew?tìpawm=' + encodeURIComponent(query))
+		response = await fetch('https://beta.reykunyu.lu/api/fwew?dialect=combined&tìpawm=' + encodeURIComponent(query))
 			.then(response => response.json());
 	} catch (e) {
 		return _('error-search', language);
@@ -553,7 +553,7 @@ function createWordLink(language, link, hideTranslation) {
 		return link;
 	} else {
 		let url = "https://reykunyu.lu/?q=" + link["na'vi"];
-		let lemma = lemmaForm(link["na'vi"], link["type"]);
+		let lemma = lemmaForm(link["word"]["combined"], link["type"]);
 		let result = utils.markdownLink(lemma, url);
 		if (!hideTranslation) {
 			result += " (" + getShortTranslation(language, link) + ")";
@@ -753,15 +753,18 @@ function getTranslation(language, translation) {
 }
 
 function lemmaForm(word, type) {
+	let wordMarkdown = word.replaceAll('/', '');
+	wordMarkdown = wordMarkdown.replaceAll('[', '__');
+	wordMarkdown = wordMarkdown.replaceAll(']', '__');
 	if (type === "n:si" || type === "nv:si") {
-		return word + ' si';
+		return wordMarkdown + ' si';
 	} else if (type === 'aff:pre') {
-		return word + "-";
+		return wordMarkdown + "-";
 	} else if (type === 'aff:in') {
-		return '‹' + word + '›';
+		return '‹' + wordMarkdown + '›';
 	} else if (type === 'aff:suf') {
-		return '-' + word;
+		return '-' + wordMarkdown;
 	}
-	return word;
+	return wordMarkdown;
 }
 

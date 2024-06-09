@@ -46,10 +46,10 @@ module.exports = {
 	execute: async function (interaction) {
 		const query = interaction.options.getString('input');
 		const language = utils.getLanguage(interaction);
-		const ipa = interaction.options.getBoolean('ipa');
+		//const ipa = interaction.options.getBoolean('ipa');
 		const detailed = interaction.options.getBoolean('detailed');
 		let mode = 'navi';
-		let reply = await naviSearcher.search(query, language, ipa, detailed);
+		let reply = await naviSearcher.search(query, language, true, detailed);
 		if (typeof reply === 'string' && reply.startsWith(_('no-results-recognizer', language))) {
 			englishReply = await englishSearcher.search(query, language);
 			if (typeof englishReply !== 'string' || !englishReply.startsWith(_('no-results-recognizer', language))) {
