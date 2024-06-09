@@ -9,23 +9,23 @@ const utils = require('../utils');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('random')
-		.setDescription('Picks random Na\'vi words')
+		.setDescription('Picks random Na\'vi words.')
 		.addIntegerOption(option =>
 				option.setName('number')
-				.setDescription('How many words to pick')
+				.setDescription('Number of words to pick.')
 				.setRequired(false))
 		.addStringOption(option =>
 				option.setName('type')
-				.setDescription('Pick only words of the given word type')
+				.setDescription('Pick only words of the given word type.')
 				.setRequired(false)
-				.addChoice('noun', 'n')
-				.addChoice('adjective', 'adj')
-				.addChoice('verb (any type)', 'v:')
-				.addChoice('intransitive verb', 'v:in')
-				.addChoice('transitive verb', 'v:tr')
-				.addChoice('adverb', 'adv')
-				.addChoice('adposition', 'adp')
-				.addChoice('infix', 'aff:in')),
+				.addChoices({'name': 'noun', 'value': 'n'},
+					{'name': 'adjective', 'value': 'adj'},
+					{'name': 'verb (any type)', 'value': 'v:'},
+					{'name': 'intransitive verb', 'value': 'v:in'},
+					{'name': 'transitive verb', 'value': 'v:tr'},
+					{'name': 'adverb', 'value': 'adv'},
+					{'name': 'adposition', 'value': 'adp'},
+					{'name': 'infix', 'value': 'aff:in'})),
 
 	execute: async function (interaction) {
 		let number = interaction.options.getInteger('number');
@@ -56,9 +56,8 @@ module.exports = {
 
 		const language = utils.getLanguage(interaction);
 		if (number === 1) {
-			const buttonRow = utils.createRandomButtonRow();
 			await interaction.reply({
-				'content': naviSearcher.getSingleWordResult(response, [], language)
+				'embeds': naviSearcher.getSingleWordResult(response, [], language)
 			});
 		} else {
 			let text = '';
@@ -68,11 +67,11 @@ module.exports = {
 					text += '\n';
 				}
 
-				text += '**'
-					text += response[i]['na\'vi'];
-				text += '**'
-					text += '    '
-					text += naviSearcher.singleLineResultMarkdown(response[i], language);
+				text += '**';
+				text += response[i]['na\'vi'];
+				text += '**';
+				text += '    ';
+				text += naviSearcher.singleLineResultMarkdown(response[i], language);
 				text += naviSearcher.getTranslation(language, response[i]['translations'][0]);
 			}
 

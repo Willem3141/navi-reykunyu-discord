@@ -25,10 +25,12 @@ async function search(query, language) {
 
 	for (let i = 0; i < response.length; i++) {
 		text = turndownService.turndown(response[i]);
+		// hack: fix broken links in Markdown
+		text = text.replace(/\[\*\*([^*]*)\*\*\]\(([^)]*)\)/gm, '**[$1](https://reykunyu.lu$2)**');
 		const embed = new MessageEmbed()
 			.setColor(0x359BE9)
 			.setDescription(text)
-			.setFooter({'text': 'source: An Annotated Na\'vi Dictionary by Plumps, 2022-07-03'});
+			.setFooter({'text': 'source: An Annotated Na\'vi Dictionary by Plumps, 2024-01-06'});
 		embeds.push(embed);
 	}
 

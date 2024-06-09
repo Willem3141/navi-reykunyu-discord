@@ -44,14 +44,14 @@ function spaces(n) {
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('tslam')
-		.setDescription('Runs a grammar analyzer on a Na\'vi sentence')
+		.setDescription('Runs a grammar analyzer on a Na\'vi sentence. (Experimental!)')
 		.addStringOption(option =>
 				option.setName('input')
-				.setDescription('The sentence to analyze')
+				.setDescription('Sentence to analyze.')
 				.setRequired(true))
 		.addBooleanOption(option =>
 				option.setName('private')
-				.setDescription('If True, then Reykunyu will show the results only to you rather than publicly')),
+				.setDescription('If True, Reykunyu will show the results only to you rather than publicly.')),
 
 	execute: async function (interaction) {
 		let text = "";

@@ -13,72 +13,31 @@ module.exports = {
 	async execute(client, interaction) {
 		const language = utils.getLanguage(interaction);
 
-		if (interaction.isSelectMenu()) {
-			const key = interaction.customId.substring(5);  // remove "mode-"
-			const query = queryStore.retrieveQueryFor(key);
-			const value = interaction.values[0];
-			const buttonRow = utils.createButtonRow(query, language, value);
-			let content = '';
-			if (value === 'navi') {
-				content = await naviSearcher.search(query, language);
-			} else if (value === 'english') {
-				content = await englishSearcher.search(query, language);
-			} else if (value === 'annotated') {
-				content = await annotatedSearcher.search(query, language);
+		if (interaction.isCommand()) {
+			const command = client.commands.get(interaction.commandName);
+			if (!command) {
+				return;
 			}
-			if (typeof content === 'string' && content.startsWith('No results')) {
-				content = [new MessageEmbed()
-					.setColor(0xE9359B)
-					.setDescription(`**${query}**: ${content}`)];
+
+			try {
+				await command.execute(interaction);
+			} catch (error) {
+				console.error(error);
+				await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
 			}
-			if (typeof content === 'string') {
-				interaction.update({
-					'content': utils.truncate(content),
-					'embeds': [],
-					'components': [buttonRow]
-				});
-			} else {
-				interaction.update({
-					'embeds': content,
-					'components': [buttonRow]
-				});
-			}
-			return;
 		}
 
-		if (interaction.isButton()) {
-			if (Math.random() < 0.001) {
-				interaction.reply({
-					'content': 'Uhm yeah you want another word? Not gonna happen'
-				});
-			} else {
-				const response = await fetch('https://reykunyu.wimiso.nl/api/random?holpxay=1')
-					.then(response => response.json())
-					.catch(async function (error) {
-						await interaction.reply({
-							'content': 'Something went wrong while getting your random words. ' +
-								'This shouldn\'t happen, so let me ping <@163315929760006144> to get the issue fixed.'
-						});
-						return;
-					});
-				const buttonRow = utils.createRandomButtonRow();
-				await interaction.reply({
-					'content': naviSearcher.getSingleWordResult(response, [], language)
-				});
+		if (interaction.isAutocomplete()) {
+			const command = client.commands.get(interaction.commandName);
+			if (!command) {
+				return;
 			}
-			return;
-		}
 
-		const command = client.commands.get(interaction.commandName);
-		if (!command) {
-			return;
-		}
-
-		try {
-			await command.execute(interaction);
-		} catch (error) {
-			console.error(error);
-			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+			try {
+				await command.autocomplete(interaction);
+			} catch (error) {
+				console.error(error);
+			}
 		}
 	}
 };

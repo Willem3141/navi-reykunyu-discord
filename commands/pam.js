@@ -13,14 +13,14 @@ const englishSearcher = require('../searchers/english');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('pam')
-		.setDescription('Returns an audio clip of a Na\'vi word')
+		.setDescription('Returns an audio clip of a Na\'vi word.')
 		.addStringOption(option =>
 				option.setName('input')
-				.setDescription('The word or sentence to search for')
+				.setDescription('Your search query (a single word).')
 				.setRequired(true))
 		.addBooleanOption(option =>
 				option.setName('private')
-				.setDescription('If True, then Reykunyu will show the results only to you rather than publicly')),
+				.setDescription('If True, Reykunyu will show the results only to you rather than publicly.')),
 
 	execute: async function (interaction) {
 		const query = interaction.options.getString('input');
@@ -66,7 +66,7 @@ module.exports = {
 		const index = Math.floor(Math.random() * audio.length);
 		const clip = audio[index];
 		files = [{
-			'attachment': '../navi-reykunyu/fam/' + clip['file'],
+			'attachment': '../navi-reykunyu/data/fam/' + clip['file'],
 			'name': 'sound.mp3'
 		}];
 		text += ' (by ' + clip['speaker'] + '):';

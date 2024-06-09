@@ -1,6 +1,7 @@
 const { MessageActionRow, MessageButton, MessageSelectMenu } = require('discord.js');
 
 const queryStore = require('./queryStore');
+const _ = require('./ui-translations');
 
 module.exports = {
 	getLanguage: getLanguage,
@@ -26,46 +27,37 @@ function getLanguage(interaction) {
 		return 'fr';
 	} else if (channelName.includes("nederlands")) {
 		return 'nl';
-	} else if (channelName.includes("nìna’vi-nì’aw")) {
+	} else if (channelName.includes("nìna’vi-nì’aw") || channelName.includes("lì’fya-na’rìngä-nì’aw")) {
 		return 'x-navi';
 	}
 	return 'en';
 }
 
 function getLanguageName(code) {
-	if (code === 'de') {
-		return 'Deutsch';
-	} else if (code === 'fr') {
-		return 'Français';
-	} else if (code === 'nl') {
-		return 'Nederlands';
-	} else if (code === 'x-navi') {
-		return 'Na’vi';
-	}
-	return 'English';
+	return _('language', code);
 }
 
 function createButtonRow(query, language, mode) {
-	language = getLanguageName(language);
+	const languageName = getLanguageName(language);
 	let buttonRow = new MessageActionRow().addComponents(
 			new MessageSelectMenu()
 			.setCustomId('mode-' + queryStore.getKeyFor(query))
 			.addOptions([
 				{
-					'label': 'Na\'vi → ' + language,
-					'description': `Enter a Na\'vi word or sentence, get the ${language} translation`,
+					'label': 'Na\'vi → ' + languageName,
+					'description': _('mode-navi-description', language),
 					'value': 'navi',
 					'default': mode === 'navi'
 				},
 				{
-					'label': language + ' → Na\'vi',
-					'description': `Enter word in ${language}, get matching Na\'vi words`,
+					'label': languageName + ' → Na\'vi',
+					'description': _('mode-english-description', language),
 					'value': 'english',
 					'default': mode === 'english'
 				},
 				{
 					'label': 'Annotated Dictionary',
-					'description': 'Search Plumps\' Annotated Dictionary for usage examples',
+					'description': _('mode-annotated-description', language),
 					'value': 'annotated',
 					'default': mode === 'annotated'
 				}

@@ -22,7 +22,11 @@ async function search(query, language) {
 	let text = '';
 
 	if (response.length === 0) {
-		return 'No results found for English → Na\'vi.';
+		if (query.split(' ').length > 1) {
+			return 'No results found for English → Na\'vi. (Reykunyu cannot currently search for English phrases consisting of more than one word, so please enter one word at a time.)';
+		} else {
+			return 'No results found for English → Na\'vi.';
+		}
 	}
 
 	for (let i = 0; i < response.length; i++) {
