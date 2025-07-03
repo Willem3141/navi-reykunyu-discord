@@ -37,9 +37,9 @@ turndownService.addRule('small-caps', {
 	}
 });
 
-client.on('raw', packet => {
+/*client.on('raw', packet => {
     console.log('hi!', packet);
-});
+});*/
 
 // read events
 const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
@@ -65,7 +65,7 @@ for (const file of commandFiles) {
 client.login(config['token']);
 
 client.on('messageCreate', async message => {
-	console.log(message.channel);
+	//console.log(message.channel);
 
 	// some sanity checks
 	if (message.author.bot) {

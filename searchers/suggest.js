@@ -12,7 +12,7 @@ module.exports = {
 async function search(query, language, ipa, detailed) {
 	let response;
 	try {
-		response = await fetch('https://reykunyu.lu/api/mok?tìpawm=' + encodeURIComponent(query))
+		response = await fetch('https://reykunyu.lu/api/mok?dialect=FN&tìpawm=' + encodeURIComponent(query))
 			.then(response => response.json());
 	} catch (e) {
 		return [];
@@ -26,7 +26,13 @@ async function search(query, language, ipa, detailed) {
 
 	let resultObjects = [];
 	for (let result of results) {
-		resultObjects.push({'name': result['title'], 'value': result['title']});
+		let navi = result['title'];
+		navi = navi.replaceAll('<span class="stressed">', '');
+		navi = navi.replaceAll('</span>', '');
+		let english = result['description'];
+		english = english.replaceAll('<div class="ui horizontal label">', '(');
+		english = english.replaceAll('</div>', ')');
+		resultObjects.push({'name': navi + ' — ' + english, 'value': navi});
 	}
 
 	return resultObjects;

@@ -15,7 +15,7 @@ module.exports = {
 async function search(query, language, ipa, detailed) {
 	let response;
 	try {
-		response = await fetch('https://beta.reykunyu.lu/api/fwew?dialect=combined&tìpawm=' + encodeURIComponent(query))
+		response = await fetch('https://reykunyu.lu/api/fwew?dialect=combined&tìpawm=' + encodeURIComponent(query))
 			.then(response => response.json());
 	} catch (e) {
 		return _('error-search', language);
@@ -72,7 +72,7 @@ function getSingleWordResult(result, suggestions, language, ipa, detailed) {
 		text += '\n' + toReadableType(r["type"]) + ' ' + getAllTranslations(language, r['translations']);
 		if (r["meaning_note"]) {
 			text += '\n';
-			text += noteSection(language, r["meaning_note"]);
+			text += noteSection(language, r["meaning_note"], r['references']);
 		}
 
 		if (r.hasOwnProperty("conjugated")) {
@@ -96,7 +96,7 @@ function getSingleWordResult(result, suggestions, language, ipa, detailed) {
 				embed.addField('Affixes', affixesSection(language, r["affixes"]));
 			}
 			if (r['etymology']) {
-				embed.addField('Etymology', etymologySection(language, r['etymology']));
+				embed.addField('Etymology', etymologySection(language, r['etymology'], r['references']));
 			}
 			if (r['derived']) {
 				embed.addField('Derivations', derivedSection(language, r["derived"]));
@@ -503,15 +503,15 @@ function affixesSection(language, affixes) {
 	return text;
 }
 
-function etymologySection(language, etymology) {
+function etymologySection(language, etymology, references) {
 	let text = [];
-	text.push(linkStringToMarkdown(language, etymology));
+	text.push(linkStringToMarkdown(language, etymology, references));
 	return text.join(" ");
 }
 
-function noteSection(language, note) {
+function noteSection(language, note, references) {
 	let text = [];
-	text.push(linkStringToMarkdown(language, note));
+	text.push(linkStringToMarkdown(language, note, references));
 	return text.join(" ");
 }
 
@@ -531,13 +531,25 @@ function derivedSection(language, derived) {
 	return text;
 }
 
-function linkStringToMarkdown(language, linkString) {
+const wordLinkRegex = /\[([^:\]]+):([^\]]+)\]/g;
+
+function linkStringToMarkdown(language, linkString, references) {
 	let result = "";
-	for (let piece of linkString) {
-		if (typeof piece === 'string') {
-			result += piece;
+	let pieces = linkString.split(wordLinkRegex);
+	for (let i = 0; i < pieces.length; i++) {
+		if (i % 3 === 0) {
+			// string piece
+			result += pieces[i];
 		} else {
-			result += createWordLink(language, piece);
+			const word = pieces[i];
+			const type = pieces[i + 1];
+			const key = word + ':' + type;
+			if (references && references[key]) {
+				result += createWordLink(language, references[key]);
+			} else {
+				result += '[?]';
+			}
+			i++;  // skip type
 		}
 	}
 	return result;

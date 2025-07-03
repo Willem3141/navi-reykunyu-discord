@@ -17,20 +17,24 @@ async function search(query, language) {
 		return 'Something went wrong while searching. This shouldn\'t happen, so let me ping <@163315929760006144> to get the issue fixed.';
 	}
 
-	if (response.length === 0) {
+	if (!response.hasOwnProperty('results')) {
+		return 'No results found in the Annotated Dictionary.';
+	}
+
+	if (response['results'].length === 0) {
 		return 'No results found in the Annotated Dictionary.';
 	}
 
 	let embeds = [];
 
-	for (let i = 0; i < response.length; i++) {
-		text = turndownService.turndown(response[i]);
+	for (let i = 0; i < response['results'].length; i++) {
+		text = turndownService.turndown(response['results'][i]);
 		// hack: fix broken links in Markdown
 		text = text.replace(/\[\*\*([^*]*)\*\*\]\(([^)]*)\)/gm, '**[$1](https://reykunyu.lu$2)**');
 		const embed = new MessageEmbed()
 			.setColor(0x359BE9)
 			.setDescription(text)
-			.setFooter({'text': 'source: An Annotated Na\'vi Dictionary by Plumps, 2024-01-06'});
+			.setFooter({'text': 'source: An Annotated Na\'vi Dictionary by Plumps, 2025-02-03'});
 		embeds.push(embed);
 	}
 

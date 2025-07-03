@@ -47,7 +47,7 @@ module.exports = {
 		const query = interaction.options.getString('input');
 		const language = utils.getLanguage(interaction);
 		//const ipa = interaction.options.getBoolean('ipa');
-		const detailed = interaction.options.getBoolean('detailed');
+		const detailed = interaction.options.getBoolean('detailed') ?? true;
 		let mode = 'navi';
 		let reply = await naviSearcher.search(query, language, true, detailed);
 		if (typeof reply === 'string' && reply.startsWith(_('no-results-recognizer', language))) {
